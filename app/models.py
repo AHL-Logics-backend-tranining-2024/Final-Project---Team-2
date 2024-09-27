@@ -14,14 +14,15 @@ class TokenData(BaseModel):
 
 # User Model
 class User:
-    id : UUID = Field(default_factory=uuid4)
-    username: str
-    password:EmailStr
-    hashed_password:str
-    is_admin:bool=False
-    is_active:bool=True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = None
+    def __init__(self, username: str, email: EmailStr, hashed_password: str):
+        self.id: UUID = uuid4()
+        self.username: str = username
+        self.email: EmailStr = email
+        self.hashed_password: str = hashed_password
+        self.is_admin: bool = False
+        self.is_active: bool = True
+        self.created_at: datetime = datetime.utcnow()
+        self.updated_at: datetime = None
     
     
 
