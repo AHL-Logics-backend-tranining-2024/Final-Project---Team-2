@@ -22,7 +22,7 @@ class User:
         self.is_admin: bool = False
         self.is_active: bool = True
         self.created_at: datetime = datetime.utcnow()
-        self.updated_at: datetime = None
+        self.updated_at: datetime = self.created_at
     
     
 

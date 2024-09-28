@@ -11,7 +11,7 @@ from app.models import User
 class UserBaseModel(BaseModel):
     username:str = Field(...,example = "jibreen")
     email:EmailStr = Field(...,example= "test@gmail.com")
-    password:str
+    password:str = Field(...,example = "Jibreen123%^")
     
     # Define the constraints for the password
     PASSWORD_REGEX: ClassVar[str] = (
@@ -21,7 +21,8 @@ class UserBaseModel(BaseModel):
         r"(?=.*[@#$%^&+=])"  # At least one special character
         r".{8,}$"  # Minimum length of 8 characters
     )
-
+    
+    # Validator for password constraints
     @validator('password')
     def validate_password(cls, password):
         if not re.match(cls.PASSWORD_REGEX, password):
