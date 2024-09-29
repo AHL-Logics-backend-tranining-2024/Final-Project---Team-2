@@ -8,5 +8,5 @@ class Token(BaseModel):
     
 # TokenData Model for storing user information associated with the token
 class TokenData(BaseModel):
-    username: UUID | None = None  # The user's UUID identifier, or None if not provided
+    username: str | None = None  
 

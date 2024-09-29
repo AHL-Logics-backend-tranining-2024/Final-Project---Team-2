@@ -1,7 +1,7 @@
 
 from datetime import datetime, timezone
 import re
-from typing import ClassVar
+from typing import ClassVar, Optional
 from uuid import UUID, uuid4
 from pydantic import BaseModel, EmailStr, Field, validator
 from app.utils import get_password_hash, verify_password
@@ -38,7 +38,7 @@ class User(UserBase):
     is_admin: bool = False  # Default values for admin status
     is_active: bool = True  # Default values for active status
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = None
     
 
     def set_password(self, password: str):
