@@ -69,3 +69,8 @@ class CreateUserResponseModel(BaseModel):
     is_admin: bool
     is_active: bool
     created_at: datetime
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
