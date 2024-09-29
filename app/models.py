@@ -52,7 +52,7 @@ class User(UserBaseModel):
     is_admin: bool = False  # Default values for admin status
     is_active: bool = True  # Default values for active status
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default=None) 
+    updated_at: Optional[datetime] = Field(default=None)
     
 
     def set_password(self, password: str):
