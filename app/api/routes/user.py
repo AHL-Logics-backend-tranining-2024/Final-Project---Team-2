@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException,status
-from app.schemas.user import CreateUserResponseModel, User, UserCreate
+from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
 
 # Router and fake database setup
@@ -8,7 +8,7 @@ fake_db = {} # Using a dictionary for fake database
 
 # Endpoint to create a new user
 @router.post("/", response_model=CreateUserResponseModel, status_code=status.HTTP_201_CREATED)
-async def create_user(user: UserCreate):
+async def create_user(user: UserCreateRequestModel):
     # Check if user already exists by email
     if any(u.email == user.email for u in fake_db.values()):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
