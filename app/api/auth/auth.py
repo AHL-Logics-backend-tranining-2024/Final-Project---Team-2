@@ -2,8 +2,6 @@
 
 from datetime import datetime
 from uuid import uuid4
-import os
-from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from app.models import User
