@@ -2,9 +2,6 @@
 
 from datetime import datetime
 from uuid import uuid4
-from dotenv import load_dotenv
-from fastapi.security import OAuth2PasswordBearer
-import jwt
 from app.models import User
 from app.utils import get_password_hash, verify_password
 
@@ -30,10 +27,6 @@ fake_db_user = {
         "updated_at": None
     }
 }
-
-load_dotenv()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/")
 
 def get_user(db, username: str):
     if username in db:

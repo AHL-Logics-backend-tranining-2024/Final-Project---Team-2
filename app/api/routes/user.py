@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
+from app.api.auth.auth import *
 
 # Router and fake database setup
 router = APIRouter()

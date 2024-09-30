@@ -14,7 +14,7 @@ class Token(BaseModel):
     
 # TokenData Model for storing user information associated with the token
 class TokenData(BaseModel):
-    username: str | None = None  
+    username: str | None = None    
 
 
 #------------ User Model -----------------#
