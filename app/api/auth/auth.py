@@ -6,8 +6,8 @@ from app.models import User
 from app.utils import get_password_hash, verify_password
 
 fake_db_user = {
-    "regular_user": {
-        "id": uuid4(),
+    str(uuid4()): {
+        "id": str(uuid4()),
         "username": "regular_user",
         "email": "user@example.com",
         "hashed_password": get_password_hash("Test@1234"),
@@ -16,8 +16,8 @@ fake_db_user = {
         "created_at": datetime.utcnow(),
         "updated_at": None
     },
-    "admin_user": {
-        "id": uuid4(),
+    str(uuid4()): {
+        "id": str(uuid4()),
         "username": "admin_user",
         "email": "admin@example.com",
         "hashed_password": get_password_hash("Admin@1234"),
@@ -28,16 +28,14 @@ fake_db_user = {
     }
 }
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return User(**user_dict)
-    return None
 
 def authenticate_user(username: str, password: str):
-    user = next((User(**u) for u in fake_db_user.values() if u["username"] == username), None)
-    if not user:
+    user_data = next((u for u in fake_db_user.values() if u["username"] == username), None)
+    
+    if not user_data:
         return False
-    if not verify_password(password, user.hashed_password):
+    
+    if not verify_password(password, user_data["hashed_password"]):
         return False
-    return user
+    
+    return user_data
