@@ -54,12 +54,6 @@ class User(UserBaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
     
-
-    def set_password(self, password: str):
-        self.hashed_password = get_password_hash(password)
-
-    def verify_password(self, password: str):
-        return verify_password(password, self.hashed_password)
    
     
 class CreateUserResponseModel(UserBaseModel):
