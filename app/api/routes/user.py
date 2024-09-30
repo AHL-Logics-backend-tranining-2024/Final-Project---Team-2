@@ -1,4 +1,4 @@
-from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
@@ -20,7 +20,6 @@ async def create_user(user: UserCreateRequestModel):
         email=user.email,
         hashed_password=get_password_hash(user.password)  # Hash the password
     )
-
     
     # Store in fake_db
     fake_db[str(new_user.id)] = new_user

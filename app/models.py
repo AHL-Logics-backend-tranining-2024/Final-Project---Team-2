@@ -64,8 +64,6 @@ class User(UserBaseModel):
     
 class CreateUserResponseModel(UserBaseModel):
     id: UUID
-    username: str
-    email: EmailStr
     is_admin: bool
     is_active: bool
     created_at: datetime
@@ -74,3 +72,5 @@ class CreateUserResponseModel(UserBaseModel):
         json_encoders = {
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
+        
+    
