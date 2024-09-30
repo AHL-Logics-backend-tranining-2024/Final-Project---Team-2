@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.auth.oauth import get_current_active_user, get_current_admin_user, get_current_user
-from app.models import CreateUserResponseModel, TokenData, User, UserCreateRequestModel
+from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
 from app.api.auth.auth import *
 
