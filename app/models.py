@@ -62,7 +62,7 @@ class User(UserBaseModel):
         return verify_password(password, self.hashed_password)
    
     
-class CreateUserResponseModel(BaseModel):
+class CreateUserResponseModel(UserBaseModel):
     id: UUID
     username: str
     email: EmailStr

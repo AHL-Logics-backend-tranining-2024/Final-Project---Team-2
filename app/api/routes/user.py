@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException,status
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException,status
+from app.api.auth.oauth import get_current_user
 from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
 
@@ -35,6 +37,20 @@ async def create_user(user: UserCreateRequestModel):
     )
 
 
-@router.get("/example")
-def example():
-    return {"message": "this is an example"}
+#Example endpoint to get a specific user , to try use oauth2 token
+@router.get("/{user_id}", response_model=CreateUserResponseModel)
+async def get_user_details(
+    user_id: UUID, current_user: User = Depends(get_current_user)
+):
+    user = fake_db.get(str(user_id))
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this user's details")
+    return CreateUserResponseModel(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        is_admin=user.is_admin,
+        is_active=user.is_active,
+        created_at=user.created_at)
