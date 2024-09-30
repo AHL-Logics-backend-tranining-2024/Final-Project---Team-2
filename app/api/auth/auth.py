@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from uuid import uuid4
-from app.models import User
 from app.utils import get_password_hash, verify_password
 
 fake_db_user = {

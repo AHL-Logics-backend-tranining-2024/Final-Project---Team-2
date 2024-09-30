@@ -1,13 +1,12 @@
 
 from fastapi import APIRouter, Depends, HTTPException,status
-from app.api.auth.oauth import get_current_active_user, get_current_admin_user, get_current_user
 from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
 from app.api.auth.auth import *
 
 # Router and fake database setup
 router = APIRouter()
-""" fake_db = {} """ # Using a dictionary for fake database
+
 
 # Endpoint to create a new user
 @router.post("/", response_model=CreateUserResponseModel, status_code=status.HTTP_201_CREATED)
