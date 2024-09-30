@@ -1,5 +1,7 @@
 # app/auth/oauth.py
 
+from uuid import UUID
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import os
@@ -7,6 +9,8 @@ import jwt
 from app.models import TokenData
 from app.models import User
 from app.api.auth.auth import get_user,fake_db_user
+
+load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/")
 
@@ -18,7 +22,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
-        username: str = payload.get("sub")
+        username: UUID = payload.get("sub")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
