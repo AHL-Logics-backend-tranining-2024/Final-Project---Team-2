@@ -73,4 +73,33 @@ class CreateUserResponseModel(UserBaseModel):
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-    
+
+# ------------ Status Model -----------------#
+# Models
+class OrderStatusBaseModel(BaseModel):
+    name: str
+
+class OrderStatusCreateModel(OrderStatusBaseModel):
+    pass
+
+class OrderStatusUpdateModel(OrderStatusBaseModel):
+    pass
+
+class OrderStatusModel(OrderStatusBaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+
+class OrderStatusResponseModel(OrderStatusBaseModel):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+class DeleteResponseModel(BaseModel):
+    message: str
+    status_id: UUID
