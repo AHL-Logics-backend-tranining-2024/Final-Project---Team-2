@@ -1,5 +1,6 @@
 
 from fastapi import APIRouter, Depends, HTTPException,status
+from app.api.auth.oauth import get_current_user
 from app.models import CreateUserResponseModel, User, UserCreateRequestModel
 from app.utils import get_password_hash
 from app.api.auth.auth import *
@@ -35,3 +36,6 @@ async def create_user(user: UserCreateRequestModel):
         created_at=new_user.created_at
     )
 
+@router.get("/users/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user

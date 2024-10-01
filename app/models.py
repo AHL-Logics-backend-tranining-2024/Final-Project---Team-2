@@ -14,7 +14,7 @@ class Token(BaseModel):
     
 # TokenData Model for storing user information associated with the token
 class TokenData(BaseModel):
-    user_id: Optional[UUID] = None    
+    sub: Optional[UUID] = None 
 
 
 #------------ User Model -----------------#
