@@ -35,7 +35,3 @@ async def create_user(user: UserCreateRequestModel):
         is_active=new_user.is_active,
         created_at=new_user.created_at
     )
-
-@router.get("/users/me", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
