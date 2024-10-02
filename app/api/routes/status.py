@@ -33,7 +33,7 @@ async def create_status(status: OrderStatusCreateModel, current_user: User = Dep
         
 
 @router.get("/{status_id}", response_model=OrderStatusResponseModel)
-async def get_status(status_id: UUID, current_user: User = Depends(get_current_admin_user)):
+async def get_status(status_id: UUID):
     if status_id not in statusOrders_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status not found")
     return OrderStatusModel(**statusOrders_db[status_id])
