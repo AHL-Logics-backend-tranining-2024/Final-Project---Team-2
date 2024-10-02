@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.post("/", response_model=OrderStatusResponseModel, status_code=status.HTTP_201_CREATED)
 async def create_status(status: OrderStatusCreateModel, current_user: User = Depends(get_current_admin_user)):
-   try:
+   
     if any(existing_status["name"].lower() == status.name.lower() for existing_status in statusOrders_db.values()):
         raise HTTPException(status_code=400, detail="Status name already exists")
     
@@ -22,14 +22,6 @@ async def create_status(status: OrderStatusCreateModel, current_user: User = Dep
     
     return new_status
     
-   except HTTPException as http_ex:
-        raise http_ex
-    
-   except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}"
-        )
         
 
 @router.get("/{status_id}", response_model=OrderStatusResponseModel)
@@ -41,7 +33,7 @@ async def get_status(status_id: UUID,current_user: User = Depends(get_current_ad
 
 @router.put("/{status_id}", response_model=OrderStatusResponseModel)
 async def update_status(status_id: UUID, status_update: OrderStatusUpdateModel, current_user: User = Depends(get_current_admin_user)):
-    try:
+    
      if status_id not in statusOrders_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status not found")
     
@@ -53,24 +45,18 @@ async def update_status(status_id: UUID, status_update: OrderStatusUpdateModel, 
      statusOrders_db[status_id] = updated_status
      return OrderStatusResponseModel(**updated_status)
  
-    except HTTPException as http_ex:
-        raise http_ex
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}"
-        )
 
 @router.delete("/{status_id}")
 async def remove_status(status_id: UUID, current_user: User = Depends(get_current_admin_user)):
-    try:
      if status_id not in statusOrders_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status not found")
      
      for order in orders_db.values():
         if order["status_id"] == status_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Can't delete status . It is used in an order")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Can't delete status. It is used in an order. Consider creating a new status for obsolete items."
+                )
     
      deleted_status = statusOrders_db.pop(status_id)
      
@@ -79,11 +65,4 @@ async def remove_status(status_id: UUID, current_user: User = Depends(get_curren
         status_id=status_id
      )
      
-    except HTTPException as http_ex:
-        raise http_ex
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}"
-        )
+    
