@@ -1,3 +1,5 @@
 fastapi[standard]==0.115.0
 passlib[bcrypt]
 pyjwt
+python-dotenv
+pydantic-settings
