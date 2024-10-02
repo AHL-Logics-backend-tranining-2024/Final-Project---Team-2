@@ -14,7 +14,6 @@ from app.api.auth.auth import fake_db_user
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/")
 
 
-# JWT token verification
 def verify_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
