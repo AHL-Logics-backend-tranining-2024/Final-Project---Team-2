@@ -8,7 +8,7 @@ import jwt
 from app.settings import settings
 from app.utils import ALGORITHM
 from app.models import User
-from app.api.auth.auth import fake_db_user
+from app.database import users_db
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/")
@@ -52,7 +52,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         user_id = verify_token(token)
 
         # Fetch the user by ID
-        user = next((u for u in fake_db_user.values() if str(u["id"]) == user_id), None)
+        user = next((u for u in users_db.values() if str(u["id"]) == user_id), None)
 
         # Raise 404 if the user is not found
         if user is None:
