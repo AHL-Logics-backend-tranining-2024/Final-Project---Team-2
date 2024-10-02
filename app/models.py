@@ -77,7 +77,7 @@ class CreateUserResponseModel(UserBaseModel):
 # ------------ Status Model -----------------#
 # Models
 class OrderStatusBaseModel(BaseModel):
-    name: str
+    name: str = Field(..., examples=["Pending", "Processing", "Completed", "Canceled"],description="Status name, e.g. Pending, Processing, Completed, Canceled")
 
 class OrderStatusCreateModel(OrderStatusBaseModel):
     pass
@@ -90,10 +90,8 @@ class OrderStatusModel(OrderStatusBaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
 
-class OrderStatusResponseModel(OrderStatusBaseModel):
-    id: UUID
-    created_at: datetime
-    updated_at: datetime
+class OrderStatusResponseModel(OrderStatusModel):
+    pass
 
     class Config:
         json_encoders = {
