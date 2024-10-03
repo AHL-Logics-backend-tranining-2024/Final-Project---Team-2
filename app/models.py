@@ -73,4 +73,28 @@ class CreateUserResponseModel(UserBaseModel):
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-    
+
+# ------------ Status Model -----------------#
+# Models
+class StatusBaseModel(BaseModel):
+    name: str = Field(..., examples=["Pending", "Processing", "Completed", "Canceled"],description="Status name, e.g. Pending, Processing, Completed, Canceled")
+
+class CreateStatusRequestModel(StatusBaseModel):
+    pass
+
+class UpdateStatusRequestModel(StatusBaseModel):
+    pass
+
+class StatusModel(StatusBaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+
+class CreateStatusResponseModel(StatusModel):
+    pass
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
