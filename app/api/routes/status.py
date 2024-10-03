@@ -37,7 +37,7 @@ async def update_status(status_id: UUID, status_update: UpdateStatusRequestModel
      if status_id not in statusOrders_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status not found")
     
-     if statusOrders_db[status_id]["name"].lower() == status_update.name.lower():
+     if any(existing_status["name"].lower() == status_update.name.lower() for existing_status in statusOrders_db.values()):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail = f"Status with name '{status_update.name}' already exists")
     
      current_status = statusOrders_db[status_id]
