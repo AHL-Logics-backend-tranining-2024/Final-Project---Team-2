@@ -2,7 +2,7 @@ from datetime import datetime,timezone
 import re
 from typing import Optional
 from uuid import UUID, uuid4
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import UUID4, BaseModel, EmailStr, Field, validator
 from app.utils import get_password_hash, verify_password
 
 
@@ -72,6 +72,47 @@ class CreateUserResponseModel(UserBaseModel):
         json_encoders = {
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
+        
+        
+class UpdateUserRequestModel(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(min_length=8, example="Jibreen123@")
+    
+    @validator('password')
+    def validate_password(cls, password: str):
+        # Check for at least one lowercase letter
+        if not re.search(r'[a-z]', password):
+            raise ValueError('Password must contain at least one lowercase letter.')
+        # Check for at least one uppercase letter
+        if not re.search(r'[A-Z]', password):
+            raise ValueError('Password must contain at least one uppercase letter.')
+        # Check for at least one digit
+        if not re.search(r'\d', password):
+            raise ValueError('Password must contain at least one digit.')
+        # Check for at least one special character
+        if not re.search(r'[@$!%*?&]', password):
+            raise ValueError('Password must contain at least one special character.')
+        
+        return password
+    
+class UpdatedUserResponseModel(UserBaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    is_admin: bool
+    is_active: bool
+    created_at: datetime 
+    updated_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+class ChangeRoleRequestModel(BaseModel):
+  user_id: str = Field(..., description="The unique identifier of the user")
+  is_admin: bool = Field(..., description="The new admin status for the user")
         
 
 # ------------ Status Model -----------------#
