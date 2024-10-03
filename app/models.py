@@ -76,21 +76,21 @@ class CreateUserResponseModel(UserBaseModel):
 
 # ------------ Status Model -----------------#
 # Models
-class OrderStatusBaseModel(BaseModel):
+class StatusBaseModel(BaseModel):
     name: str = Field(..., examples=["Pending", "Processing", "Completed", "Canceled"],description="Status name, e.g. Pending, Processing, Completed, Canceled")
 
-class OrderStatusCreateModel(OrderStatusBaseModel):
+class CreateStatusRequestModel(StatusBaseModel):
     pass
 
-class OrderStatusUpdateModel(OrderStatusBaseModel):
+class UpdateStatusRequestModel(StatusBaseModel):
     pass
 
-class OrderStatusModel(OrderStatusBaseModel):
+class StatusModel(StatusBaseModel):
     id: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
 
-class OrderStatusResponseModel(OrderStatusModel):
+class CreateStatusResponseModel(StatusModel):
     pass
 
     class Config:
@@ -98,6 +98,3 @@ class OrderStatusResponseModel(OrderStatusModel):
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-class DeleteResponseModel(BaseModel):
-    message: str
-    status_id: UUID

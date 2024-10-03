@@ -6,16 +6,16 @@ from app.database import statusOrders_db,orders_db
 
 router = APIRouter()
 
-@router.post("/", response_model=OrderStatusResponseModel, status_code=status.HTTP_201_CREATED)
-async def create_status(status: OrderStatusCreateModel, current_user: User = Depends(get_current_admin_user)):
+@router.post("/", response_model=CreateStatusResponseModel, status_code=status.HTTP_201_CREATED)
+async def create_status(status: CreateStatusRequestModel, current_user: User = Depends(get_current_admin_user)):
    
     if any(existing_status["name"].lower() == status.name.lower() for existing_status in statusOrders_db.values()):
         raise HTTPException(status_code=400, detail="Status name already exists")
     
-    new_status = OrderStatusModel(
+    new_status = StatusModel(
         name=status.name,
         created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
+        updated_at=None
     )
     
     statusOrders_db[new_status.id] = new_status.dict()
@@ -24,15 +24,15 @@ async def create_status(status: OrderStatusCreateModel, current_user: User = Dep
     
         
 
-@router.get("/{status_id}", response_model=OrderStatusResponseModel)
+@router.get("/{status_id}", response_model=CreateStatusResponseModel)
 async def get_status(status_id: UUID,current_user: User = Depends(get_current_admin_user)):
     if status_id not in statusOrders_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status not found")
-    return OrderStatusResponseModel(**statusOrders_db[status_id])
+    return CreateStatusResponseModel(**statusOrders_db[status_id])
 
 
-@router.put("/{status_id}", response_model=OrderStatusResponseModel)
-async def update_status(status_id: UUID, status_update: OrderStatusUpdateModel, current_user: User = Depends(get_current_admin_user)):
+@router.put("/{status_id}", response_model=CreateStatusResponseModel)
+async def update_status(status_id: UUID, status_update: UpdateStatusRequestModel, current_user: User = Depends(get_current_admin_user)):
     
      if status_id not in statusOrders_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status not found")
@@ -43,7 +43,7 @@ async def update_status(status_id: UUID, status_update: OrderStatusUpdateModel, 
      current_status = statusOrders_db[status_id]
      updated_status = {**current_status, "name": status_update.name, "updated_at": datetime.now(timezone.utc)}
      statusOrders_db[status_id] = updated_status
-     return OrderStatusResponseModel(**updated_status)
+     return CreateStatusResponseModel(**updated_status)
  
 
 @router.delete("/{status_id}")
@@ -58,11 +58,7 @@ async def remove_status(status_id: UUID, current_user: User = Depends(get_curren
                 detail="Can't delete status. It is used in an order. Consider creating a new status for obsolete items."
                 )
     
-     deleted_status = statusOrders_db.pop(status_id)
-     
-     return DeleteResponseModel(
-        message=f"Status '{deleted_status.get('name')}' has been successfully deleted",
-        status_id=status_id
-     )
+     statusOrders_db.pop(status_id)
+
      
     
