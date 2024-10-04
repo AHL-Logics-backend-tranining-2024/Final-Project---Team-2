@@ -132,32 +132,6 @@ async def update_user(
     )
 
 
-@router.get("/", response_model=list[dict], status_code=status.HTTP_200_OK)
-async def get_all_users(current_admin: User = Depends(get_current_admin_user)):
-
-    try:
-        all_users = list(users_db.values())
-
-        return [
-            {
-                "id": user["id"],
-                "username": user["username"],
-                "email": user["email"],
-                "is_admin": user["is_admin"],
-                "is_active": user["is_active"],
-                "created_at": user["created_at"],
-                "updated_at": user["updated_at"],
-            }
-            for user in all_users
-        ]
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving users: {str(e)}",
-        )
-
-
 @router.get("/{user_id}", response_model=CreateUserResponseModel)
 async def get_user_details(
     user_id: UUID, current_user: User = Depends(get_current_user)
@@ -189,6 +163,32 @@ async def get_user_details(
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
+
+
+@router.get("/", response_model=list[dict], status_code=status.HTTP_200_OK)
+async def get_all_users(current_admin: User = Depends(get_current_admin_user)):
+
+    try:
+        all_users = list(users_db.values())
+
+        return [
+            {
+                "id": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "is_admin": user["is_admin"],
+                "is_active": user["is_active"],
+                "created_at": user["created_at"],
+                "updated_at": user["updated_at"],
+            }
+            for user in all_users
+        ]
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while retrieving users: {str(e)}",
+        )
 
 
 @router.get("/{user_id}/orders", status_code=status.HTTP_200_OK)
@@ -254,6 +254,6 @@ async def delete_user(user_id: UUID, current_user: User = Depends(get_current_us
     .............................................
     """
 
-    users_db.pop(user_id)
+    users_db.pop(str(user_id))
 
     return
