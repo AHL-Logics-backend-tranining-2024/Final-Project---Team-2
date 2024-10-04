@@ -24,16 +24,6 @@ users_db = {
         "is_active": True,
         "created_at": "2024-10-01 12:07:26",
         "updated_at": "2024-10-03 12:07:26"
-    },
-    str(uuid4()): {
-        "id": str(uuid4()),
-        "username": "admin_user",
-        "email": "admin@example.com",
-        "hashed_password": get_password_hash("Admin@1234"),
-        "is_admin": True,
-        "is_active": True,
-        "created_at": "2024-10-01 12:07:26",
-        "updated_at": "2024-10-03 12:07:26"
     }
 }
 
@@ -41,3 +31,5 @@ users_db = {
 statusOrders_db = {}
 
 orders_db = {}
+
+product_db = {}

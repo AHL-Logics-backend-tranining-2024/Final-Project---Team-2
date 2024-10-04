@@ -1,6 +1,7 @@
 
 from datetime import timezone
 from uuid import UUID
+import uuid
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.auth.oauth import get_current_admin_user, get_current_user
 from app.models import *
@@ -38,42 +39,30 @@ async def create_user(user: UserCreateRequestModel):
         is_active=new_user.is_active,
         created_at=new_user.created_at
     )
+    
 
-
-
-@router.get("/{user_id}", response_model=CreateUserResponseModel)
-async def get_user_details(
-    user_id: UUID,
-    current_user: User = Depends(get_current_user)
+@router.put("/change_role", status_code=status.HTTP_200_OK)
+async def change_role(
+    request: ChangeRoleRequestModel,
+    current_user: User = Depends(get_current_admin_user)
 ):
-    # Step 1: Authenticate User
-    if not current_user.get("is_admin") and str(current_user.get("id")) != str(user_id):
+    try:
+        user = users_db.get(str(request.user_id))
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+        user["is_admin"] = request.is_admin
+        users_db[str(request.user_id)] = user  
+
+        return {"message": "User role updated successfully."}
+    
+
+    
+    except Exception :
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. You can only view your own details."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while updating the user role."
         )
-
-    # Step 2: Validate User ID
-    user_data = users_db.get(str(user_id))
-    if not user_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-
-    # Step 3: Retrieve User Data
-    user = User(**user_data)
-
-    # Step 4: Return User Data
-    return CreateUserResponseModel(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        is_admin=user.is_admin,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        updated_at=user.updated_at
-    )
     
     
     
@@ -189,7 +178,41 @@ async def get_all_users(current_admin: User = Depends(get_current_admin_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while retrieving users: {str(e)}"
         )
-        
+   
+
+@router.get("/{user_id}", response_model=CreateUserResponseModel)
+async def get_user_details(
+    user_id: UUID,
+    current_user: User = Depends(get_current_user)
+):
+    # Step 1: Authenticate User
+    if not current_user.get("is_admin") and str(current_user.get("id")) != str(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. You can only view your own details."
+        )
+
+    # Step 2: Validate User ID
+    user_data = users_db.get(str(user_id))
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Step 3: Retrieve User Data
+    user = User(**user_data)
+
+    # Step 4: Return User Data
+    return CreateUserResponseModel(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        is_admin=user.is_admin,
+        is_active=user.is_active,
+        created_at=user.created_at,
+        updated_at=user.updated_at
+    )     
         
 @router.get("/{user_id}/orders", status_code=status.HTTP_200_OK)
 async def get_orders_for_user(user_id: UUID, current_user: User = Depends(get_current_user)):
@@ -225,27 +248,4 @@ async def get_orders_for_user(user_id: UUID, current_user: User = Depends(get_cu
      return formatted_orders
     """
     
-    
 
-@router.put("/change_role", status_code=status.HTTP_200_OK)
-async def change_role(
-    request: ChangeRoleRequestModel,
-    current_user: User = Depends(get_current_admin_user)
-):
-    try:
-        user = users_db.get(str(request.user_id))
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
-
-        user["is_admin"] = request.is_admin
-        users_db[str(request.user_id)] = user  
-
-        return {"message": "User role updated successfully."}
-    
-
-    
-    except Exception :
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while updating the user role."
-        )

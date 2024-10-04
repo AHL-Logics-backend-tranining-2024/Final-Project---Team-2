@@ -15,7 +15,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/")
 
 
 # JWT token verification
-def verify_token(token: str):
+async def verify_token(token: str):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
     
@@ -49,7 +49,7 @@ def verify_token(token: str):
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         # Verify the token and get the user ID
-        user_id = verify_token(token)
+        user_id = await verify_token(token)
 
         # Fetch the user by ID
         user = next((u for u in users_db.values() if str(u["id"]) == user_id), None)
@@ -72,7 +72,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         )
 
 
-def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_admin_user(current_user: User = Depends(get_current_user)):
     if not current_user["is_admin"]:
         raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
