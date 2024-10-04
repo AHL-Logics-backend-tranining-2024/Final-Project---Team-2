@@ -3,3 +3,4 @@ passlib[bcrypt]
 pyjwt
 python-dotenv
 pydantic-settings
+python-jose
