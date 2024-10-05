@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 import re
 from typing import Optional
 from uuid import UUID, uuid4
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, condecimal, validator
 from app.utils import get_password_hash, verify_password
 
 
@@ -148,3 +149,43 @@ class CreateStatusResponseModel(StatusModel):
 
 
 # ------------ Prodcut Model -----------------#
+class ProductBaseModel(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    price: Decimal = Field(...,description="Product price", ge=Decimal('0.01'), decimal_places=2)
+    description: Optional[str] = Field(None, max_length=1000)
+    stock: Optional[int] = Field(default=0, ge=0)
+    isAvailable: Optional[bool] = Field(default=True)
+
+class ProductCreateRequestModel(ProductBaseModel):
+    pass  # All fields are inherited from ProductBaseModel
+
+class Product(ProductBaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+
+class CreateProductResponseModel(ProductBaseModel):
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+class UpdateProductRequestModel(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    price: Optional[Decimal] = Field(None, description="Product price", ge=Decimal('0.01'), decimal_places=2)
+    description: Optional[str] = Field(None, max_length=1000)
+    stock: Optional[int] = Field(None, ge=0)
+    isAvailable: Optional[bool] = None
+
+class UpdatedProductResponseModel(ProductBaseModel):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }

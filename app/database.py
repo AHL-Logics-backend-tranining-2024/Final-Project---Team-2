@@ -32,3 +32,5 @@ users_db = {
 statusOrders_db = {}
 
 orders_db = {}
+
+products_db = {}
