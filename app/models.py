@@ -110,6 +110,19 @@ class UpdatedUserResponseModel(UserBaseModel):
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
 
 
+class GetUserResponseModel(UserBaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    is_admin: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+
+
 class ChangeRoleRequestModel(BaseModel):
     user_id: str = Field(..., description="The unique identifier of the user")
     is_admin: bool = Field(..., description="The new admin status for the user")

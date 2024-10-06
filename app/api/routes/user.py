@@ -5,6 +5,7 @@ from app.api.auth.oauth import get_current_admin_user, get_current_user
 from app.models import (
     ChangeRoleRequestModel,
     CreateUserResponseModel,
+    GetUserResponseModel,
     UpdateUserRequestModel,
     UpdatedUserResponseModel,
     User,
@@ -132,7 +133,57 @@ async def update_user(
     )
 
 
-@router.get("/{user_id}", response_model=CreateUserResponseModel)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user_id: UUID, current_user: User = Depends(get_current_user)):
+
+    # Step 1 & 2: Authenticate User and Validate User ID
+    if str(current_user.get("id")) != str(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. You can only update your own details.",
+        )
+
+    # Retrieve the current user data
+    user_data = users_db.get(str(user_id))
+
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    """ 
+    .............................................
+    I am waiting for the order model to be ready.
+    .............................................
+    """
+
+    users_db.pop(str(user_id))
+
+    return
+
+
+@router.get(
+    "/", response_model=list[GetUserResponseModel], status_code=status.HTTP_200_OK
+)
+async def get_all_users(current_admin: User = Depends(get_current_admin_user)):
+
+    all_users = list(users_db.values())
+
+    return [
+        GetUserResponseModel(
+            id=user["id"],
+            username=user["username"],
+            email=user["email"],
+            is_admin=user["is_admin"],
+            is_active=user["is_active"],
+            created_at=user["created_at"],
+            updated_at=user["updated_at"],
+        )
+        for user in all_users
+    ]
+
+
+@router.get("/{user_id}", response_model=GetUserResponseModel)
 async def get_user_details(
     user_id: UUID, current_user: User = Depends(get_current_user)
 ):
@@ -154,7 +205,7 @@ async def get_user_details(
     user = User(**user_data)
 
     # Step 4: Return User Data
-    return CreateUserResponseModel(
+    return GetUserResponseModel(
         id=user.id,
         username=user.username,
         email=user.email,
@@ -165,41 +216,10 @@ async def get_user_details(
     )
 
 
-@router.get("/", response_model=list[dict], status_code=status.HTTP_200_OK)
-async def get_all_users(current_admin: User = Depends(get_current_admin_user)):
-
-    try:
-        all_users = list(users_db.values())
-
-        return [
-            {
-                "id": user["id"],
-                "username": user["username"],
-                "email": user["email"],
-                "is_admin": user["is_admin"],
-                "is_active": user["is_active"],
-                "created_at": user["created_at"],
-                "updated_at": user["updated_at"],
-            }
-            for user in all_users
-        ]
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving users: {str(e)}",
-        )
-
-
 @router.get("/{user_id}/orders", status_code=status.HTTP_200_OK)
 async def get_orders_for_user(
     user_id: UUID, current_user: User = Depends(get_current_user)
 ):
-    # Authenticate User
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
-        )
 
     # Validate User ID
     if user_id != current_user.get("id"):
@@ -228,32 +248,3 @@ async def get_orders_for_user(
      # Return Order List
      return formatted_orders
     """
-
-
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: UUID, current_user: User = Depends(get_current_user)):
-
-    # Step 1 & 2: Authenticate User and Validate User ID
-    if str(current_user.get("id")) != str(user_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. You can only update your own details.",
-        )
-
-    # Retrieve the current user data
-    user_data = users_db.get(str(user_id))
-
-    if not user_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    """ 
-    .............................................
-    I am waiting for the order model to be ready.
-    .............................................
-    """
-
-    users_db.pop(str(user_id))
-
-    return
