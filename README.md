@@ -37,3 +37,9 @@ To run the FastAPI app, use the following command:
 ```bash
 fastapi dev app/main.py
 ```
+
+## Settings
+```
+SECRET_KEY=fddgdfgdfgdfgdsdewfwefwefewfewf343434434
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
