@@ -154,43 +154,31 @@ async def delete_user(user_id: UUID, current_user: User = Depends(get_current_us
     return
 
 
-@router.get("/", response_model=list[dict], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=list[GetUserResponseModel], status_code=status.HTTP_200_OK)
 async def get_all_users(current_admin: User = Depends(get_current_admin_user)):
-
-     try:
+  
         all_users = list(users_db.values())
 
         return [
-          {
-            "id": user["id"],
-            "username": user["username"],
-            "email": user["email"],
-            "is_admin": user["is_admin"],
-            "is_active": user["is_active"],
-            "created_at": user["created_at"],
-            "updated_at": user["updated_at"]
-        }
+              GetUserResponseModel(
+              id=user["id"],
+              username=user['username'],
+              email=user['email'],
+              is_admin=user['is_admin'],
+              is_active=user['is_active'],
+              created_at=user['created_at'],
+              updated_at=user['updated_at']
+              )
+           
             for user in all_users
         ]
-
-     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving users: {str(e)}"
-        )
    
 
-@router.get("/{user_id}", response_model=CreateUserResponseModel)
+@router.get("/{user_id}", response_model=GetUserResponseModel)
 async def get_user_details(
     user_id: UUID,
     current_user: User = Depends(get_current_user)
 ):
-    # Step 1: Authenticate User
-    if not current_user.get("is_admin") and str(current_user.get("id")) != str(user_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. You can only view your own details."
-        )
 
     # Step 2: Validate User ID
     user_data = users_db.get(str(user_id))
@@ -204,7 +192,7 @@ async def get_user_details(
     user = User(**user_data)
 
     # Step 4: Return User Data
-    return CreateUserResponseModel(
+    return GetUserResponseModel(
         id=user.id,
         username=user.username,
         email=user.email,
@@ -216,9 +204,14 @@ async def get_user_details(
         
 @router.get("/{user_id}/orders", status_code=status.HTTP_200_OK)
 async def get_orders_for_user(user_id: UUID, current_user: User = Depends(get_current_user)):
-    # Authenticate User
-    if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    
+    # Step 1: Authenticate User
+    if not current_user.get("is_admin") and str(current_user.get("id")) != str(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. You can only view your own details.",
+        )
+    
     
     # Validate User ID
     if user_id != current_user.get("id"):
