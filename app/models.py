@@ -215,9 +215,29 @@ class SearchRequest:
         self.sort_by = sort_by
         self.sort_order = sort_order
         
+class GetProductBySearchResponseModel(ProductBaseModel):
+    id: UUID
+    name: str
+    price: Decimal
+    stock: int
+    isAvailable: bool
+        
 class SearchResult(BaseModel):
     page: int
     total_pages: int
     products_per_page: int
     total_products: int
-    products: list[dict]
+    products: list[GetProductBySearchResponseModel]
+
+
+class GetProductResponseModel(ProductBaseModel):
+    id: UUID
+    name: str
+    price: Decimal
+    stock: int
+    isAvailable: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}

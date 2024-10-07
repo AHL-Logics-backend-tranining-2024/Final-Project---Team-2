@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.auth.oauth import get_current_admin_user
-from app.models import CreateProductRequestModel, CreateProductResponseModel, Product, ProductBaseModel, SearchRequest, SearchResult, UpdatedProductRequestModel, UpdatedProductResponseModel, User
+from app.models import CreateProductRequestModel, CreateProductResponseModel, GetProductBySearchResponseModel, GetProductResponseModel, Product, ProductBaseModel, SearchRequest, SearchResult, UpdatedProductRequestModel, UpdatedProductResponseModel, User
 from app.database import products_db
 
 router = APIRouter()
@@ -81,21 +81,22 @@ async def delete_product(product_id: UUID, current_user: User = Depends(get_curr
     
 
 
-@router.get("/", response_model=list[dict],status_code=status.HTTP_200_OK)
+@router.get("/", response_model=list[GetProductResponseModel],status_code=status.HTTP_200_OK)
 def get_all_products():
     
     if not products_db:
        return []
     
     return [
-            {
-                "id": product.id,
-                "name": product.name,
-                "price": product.price,
-                "stock": product.stock,
-                "isAvailable": product.isAvailable,
-                "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            }
+           GetProductResponseModel(
+                 id=product.id,
+                 name=product.name,
+                 price=product.price,
+                 stock=product.stock,
+                 isAvailable=product.isAvailable,
+                 created_at=product.created_at,
+                 updated_at=product.updated_at,
+            )
             for product in products_db.values()
         ]
     
@@ -127,22 +128,31 @@ async def search_products(search_request: SearchRequest = Depends(SearchRequest)
         total_pages=total_pages,
         products_per_page=search_request.page_size,
         total_products=len(filtered_products),
-        products=[{"id": p.id, "name": p.name, "price": p.price, "stock": p.stock, "isAvailable": p.isAvailable} for p in filtered_products]
+        products=[
+            GetProductBySearchResponseModel(
+        id=p.id,
+        name=p.name,
+        price=p.price,
+        stock=p.stock,
+        isAvailable=p.isAvailable,
+    )
+    for p in products
+        ]
     )
     
-@router.get("/{product_id}",response_model = dict, status_code=status.HTTP_200_OK)
+@router.get("/{product_id}",response_model = GetProductResponseModel, status_code=status.HTTP_200_OK)
 async def get_product(product_id: UUID):
     try:
         product = products_db.get(str(product_id))
-        return {
-            "id": product.id,
-            "name": product.name,
-            "price": product.price,
-            "description": product.description,
-            "stock": product.stock,
-            "isAvailable": product.isAvailable,
-            "created_at": product.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-        }
+        return GetProductResponseModel(
+            id=product.id,
+            name=product.name,
+            price=product.price,
+            stock=product.stock,
+            isAvailable=product.isAvailable,
+            created_at=product.created_at,
+            updated_at=product.updated_at,
+        )
         
     except KeyError:
         raise HTTPException(status_code=404, detail="Product with ID {product_id} not found.".format(product_id))
