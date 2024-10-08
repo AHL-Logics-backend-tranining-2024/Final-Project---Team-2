@@ -196,6 +196,7 @@ class UpdatedProductRequestModel(BaseModel):
     isAvailable: Optional[bool] = Field(default=None)
 
 class UpdatedProductResponseModel(ProductBaseModel):
+    id:UUID
     created_at: datetime
     updated_at: datetime
 

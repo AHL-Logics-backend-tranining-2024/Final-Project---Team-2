@@ -142,8 +142,12 @@ async def search_products(search_request: SearchRequest = Depends(SearchRequest)
     
 @router.get("/{product_id}",response_model = GetProductResponseModel, status_code=status.HTTP_200_OK)
 async def get_product(product_id: UUID):
-    try:
+    
         product = products_db.get(str(product_id))
+        
+        if product is None:
+            raise HTTPException(status_code=404, detail=f"Product with ID {product_id} not found.".format(product_id))
+        
         return GetProductResponseModel(
             id=product.id,
             name=product.name,
@@ -154,8 +158,4 @@ async def get_product(product_id: UUID):
             updated_at=product.updated_at,
         )
         
-    except KeyError:
-        raise HTTPException(status_code=404, detail="Product with ID {product_id} not found.".format(product_id))
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Product ID must be a valid UUID.")
     
