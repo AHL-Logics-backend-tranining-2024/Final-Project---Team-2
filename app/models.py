@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 import re
 from typing import Optional
 from uuid import UUID, uuid4
@@ -154,6 +155,90 @@ class StatusModel(StatusBaseModel):
 
 class CreateStatusResponseModel(StatusModel):
     pass
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        
+        
+        
+# ------------ Prodcut Model -----------------#
+class ProductBaseModel(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    price: Decimal = Field(...,description="Product price", ge=Decimal('0.01'), decimal_places=2)
+    description: Optional[str] = Field(None, max_length=1000)
+    stock: Optional[int] = Field(default=0, ge=0)
+    isAvailable: Optional[bool] = Field(default=True)
+
+
+class Product(ProductBaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+    
+
+class CreateProductRequestModel(ProductBaseModel):
+    pass  # All fields are inherited from ProductBaseModel
+
+class CreateProductResponseModel(ProductBaseModel):
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+class UpdatedProductRequestModel(BaseModel):
+    name: Optional[str] =  Field(None, min_length=1, max_length=100)
+    price: Optional[Decimal] = Field(None,description="Product price", ge=Decimal('0.01'), decimal_places=2)
+    description: Optional[str] = Field(None, max_length=1000)
+    stock: Optional[int] = Field(None, ge=0)
+    isAvailable: Optional[bool] = Field(default=None)
+
+class UpdatedProductResponseModel(ProductBaseModel):
+    id:UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+class SearchRequest:
+    def __init__(self, name: str = None, min_price: float = None, max_price: float = None, isAvailable: bool = None, page: int = 1, page_size: int = 20, sort_by: str = "name", sort_order: str = "asc"):
+        self.name = name
+        self.min_price = min_price
+        self.max_price = max_price
+        self.isAvailable = isAvailable
+        self.page = page
+        self.page_size = page_size
+        self.sort_by = sort_by
+        self.sort_order = sort_order
+        
+class GetProductBySearchResponseModel(ProductBaseModel):
+    id: UUID
+    name: str
+    price: Decimal
+    stock: int
+    isAvailable: bool
+        
+class SearchResult(BaseModel):
+    page: int
+    total_pages: int
+    products_per_page: int
+    total_products: int
+    products: list[GetProductBySearchResponseModel]
+
+
+class GetProductResponseModel(ProductBaseModel):
+    id: UUID
+    name: str
+    price: Decimal
+    stock: int
+    isAvailable: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
