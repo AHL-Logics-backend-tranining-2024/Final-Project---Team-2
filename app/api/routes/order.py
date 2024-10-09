@@ -1,13 +1,14 @@
 from datetime import timezone
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException, Path,status
 from app.database import *
 from app.api.auth.oauth import get_current_user
-from app.models import CreateOrderRequestModel, CreateOrderResponseModel, Order, OrderProduct, User
+from app.models import CreateOrderRequestModel, CreateOrderResponseModel, GetOrderResponseModel, Order, OrderProduct, OrderProductBaseModel, User
 
 router = APIRouter()
 
-@router.post("/", response_model=CreateOrderResponseModel, status_code=201)
+@router.post("/", response_model=CreateOrderResponseModel, status_code=status.HTTP_201_CREATED)
 async def create_order(
     order_request: CreateOrderRequestModel,
     current_user: User = Depends(get_current_user)
@@ -80,3 +81,35 @@ async def create_order(
         )
 
         return response
+    
+    
+@router.get("/{order_id}", response_model=GetOrderResponseModel,status_code=status.HTTP_200_OK)
+async def get_order_details(
+    order_id: UUID = Path(..., description="The ID of the order to retrieve")
+):
+    
+        # Retrieve the order from the fake database
+        order = orders_db.get(order_id)
+
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+
+        # Construct the response
+        response = GetOrderResponseModel(
+            id=order.id,
+            user_id=order.user_id,
+            status=order.status.name,
+            total_price=Decimal(order.total_price),
+            created_at=order.created_at,
+            updated_at=order.updated_at,
+            products=[
+                OrderProductBaseModel(
+                    product_id=product.product_id,
+                    quantity=product.quantity
+                )
+                for product in order.products
+            ]
+        )
+
+        return response    
+

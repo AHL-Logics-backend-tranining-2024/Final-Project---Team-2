@@ -306,3 +306,17 @@ class FullOrderResponseModel(Order):
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S'),
             Decimal: lambda v: str(v)
         }
+        
+class GetOrderResponseModel(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: Decimal = Field(..., description="Total price of the order", decimal_places=2)
+    created_at: datetime
+    updated_at: Optional[datetime]
+    products: list[OrderProductBaseModel]
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
