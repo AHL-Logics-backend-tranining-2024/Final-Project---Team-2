@@ -3,8 +3,8 @@ from decimal import Decimal
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Path,status
 from app.database import *
-from app.api.auth.oauth import get_current_user
-from app.models import CreateOrderRequestModel, CreateOrderResponseModel, GetOrderResponseModel, Order, OrderProduct, OrderProductBaseModel, User
+from app.api.auth.oauth import get_current_admin_user, get_current_user
+from app.models import *
 
 router = APIRouter()
 
@@ -14,7 +14,6 @@ async def create_order(
     current_user: User = Depends(get_current_user)
 ):
 
- 
         # Calculate total price and validate products
         total_price = Decimal('0.00')
         product_details: list[dict] = []
@@ -83,6 +82,48 @@ async def create_order(
         return response
     
     
+@router.put("/{order_id}/status", response_model=UpdateOrderStatusResponseModel,status_code=status.HTTP_200_OK)
+async def update_order_status(
+    order_id: UUID,
+    status_update: UpdateOrderStatusRequestModel,
+    current_admin: User = Depends(get_current_admin_user)
+):
+
+       # Step 2: Input Validation
+    if order_id not in orders_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    valid_statuses = ["Pending", "Processing", "Completed", "Canceled"]
+    if status_update.status not in valid_statuses:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status provided")
+
+    # Step 3: Order Status Update Logic
+    order = orders_db[order_id]
+    new_status_id = next((status["id"] for status in statusOrders_db.values() if status["name"].lower() == status_update.status.lower()), None)
+    
+    if not new_status_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Status not found in the system")
+
+    order.status_id = new_status_id
+    order.status = StatusModel(id=new_status_id, name=statusOrders_db[new_status_id]["name"])
+    order.updated_at = datetime.now(timezone.utc)
+
+    # Update the order in the database
+    orders_db[order_id] = order
+
+    # Step 4: Prepare and return the response
+    response = UpdateOrderStatusResponseModel(
+        id=order.id,
+        user_id=order.user_id,
+        total_price=order.total_price,
+        created_at=order.created_at,
+        updated_at=order.updated_at,
+        status=order.status.name
+                )
+
+    return response
+
+  
 @router.get("/{order_id}", response_model=GetOrderResponseModel,status_code=status.HTTP_200_OK)
 async def get_order_details(
     order_id: UUID = Path(..., description="The ID of the order to retrieve")
@@ -92,7 +133,7 @@ async def get_order_details(
         order = orders_db.get(order_id)
 
         if not order:
-            raise HTTPException(status_code=404, detail="Order not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
         # Construct the response
         response = GetOrderResponseModel(
@@ -112,4 +153,5 @@ async def get_order_details(
         )
 
         return response    
+
 

@@ -287,16 +287,27 @@ class CreateOrderProductRequestModel(OrderProductBaseModel):
 class CreateOrderRequestModel(BaseModel):
     products: list[CreateOrderProductRequestModel]
 
-class UpdateOrderRequestModel(BaseModel):
-    status_id: Optional[UUID] = None
-    total_price: Optional[Decimal] = Field(None, ge=Decimal('0.01'), max_digits=10, decimal_places=2)
+class UpdateOrderStatusRequestModel(BaseModel):
+    status: str = Field(..., description="New status for the order")
 
 # Response Models
 class CreateOrderResponseModel(Order):
     pass
 
-class UpdateOrderResponseModel(Order):
-    pass
+class UpdateOrderStatusResponseModel(BaseModel):
+    id: UUID
+    user_id: UUID
+    total_price: Decimal
+    status: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S'),
+            Decimal: lambda v: str(v)
+        }
+    
 
 class FullOrderResponseModel(Order):
     products: list[OrderProductResponseModel]
