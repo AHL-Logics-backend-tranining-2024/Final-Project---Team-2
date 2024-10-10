@@ -323,3 +323,15 @@ class GetOrderResponseModel(BaseModel):
         json_encoders = {
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
+        
+class GetOrderToUserResponseModel(BaseModel):
+    id: UUID
+    status: str
+    total_price: Decimal
+    created_at: datetime
+    updated_at: Optional[datetime] = Field(default=None)
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }

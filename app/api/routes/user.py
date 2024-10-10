@@ -5,6 +5,7 @@ from app.api.auth.oauth import get_current_admin_user, get_current_user
 from app.models import (
     ChangeRoleRequestModel,
     CreateUserResponseModel,
+    GetOrderToUserResponseModel,
     GetUserResponseModel,
     UpdateUserRequestModel,
     UpdatedUserResponseModel,
@@ -13,7 +14,7 @@ from app.models import (
 )
 from app.utils import get_password_hash
 from app.api.auth.auth import *
-from app.database import users_db
+from app.database import users_db,orders_db
 
 # Router and fake database setup
 router = APIRouter()
@@ -151,11 +152,14 @@ async def delete_user(user_id: UUID, current_user: User = Depends(get_current_us
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    """ 
-    .............................................
-    I am waiting for the order model to be ready.
-    .............................................
-    """
+    # Step 3: Check for Active Orders
+    active_orders = [order for order in orders_db.values() if str(order.user_id) == str(user_id) and order.status.name in ["Pending", "Processing"]]
+
+    if active_orders:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User has active orders and cannot be deleted.",
+        )
 
     users_db.pop(str(user_id))
 
@@ -216,35 +220,36 @@ async def get_user_details(
     )
 
 
-@router.get("/{user_id}/orders", status_code=status.HTTP_200_OK)
+@router.get("/{user_id}/orders",response_model=list[GetOrderToUserResponseModel], status_code=status.HTTP_200_OK)
 async def get_orders_for_user(
     user_id: UUID, current_user: User = Depends(get_current_user)
 ):
 
-    # Validate User ID
+    # Step 1: Validate User ID
     if user_id != current_user.get("id"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
-    """
-     # Retrieve Orders
-     orders = [
+    # Step 2: Retrieve Orders
+    orders = [
         order
         for order in orders_db.values()
-        if order["user_id"] == user_id
-     ]
+        if order.user_id == user_id
+    ]
 
-     # Format Response
-     formatted_orders = [
-        {
-            "id": order["id"],
-            "status": order["status"],
-            "total_price": order["total_price"],
-            "created_at": order["created_at"],
-            "updated_at": order["updated_at"]
-        }
+    if not orders:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No orders found for the user.")
+
+    # Step 3: Format Response
+    formatted_orders = [
+        GetOrderToUserResponseModel(
+            id=order.id,
+            status=order.status.name,  # Assuming status is stored as a dict with 'name'
+            total_price=order.total_price,
+            created_at=order.created_at,
+            updated_at=order.updated_at if order.updated_at else None
+        )
         for order in orders
-     ]
+    ]
 
-     # Return Order List
-     return formatted_orders
-    """
+    # Step 4: Return Order List
+    return formatted_orders

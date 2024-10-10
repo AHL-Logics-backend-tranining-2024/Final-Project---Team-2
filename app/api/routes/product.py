@@ -80,7 +80,6 @@ async def delete_product(product_id: UUID, current_user: User = Depends(get_curr
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error":f"Product with ID {product_id} not found."})
     
 
-
 @router.get("/", response_model=list[GetProductResponseModel],status_code=status.HTTP_200_OK)
 def get_all_products():
     
