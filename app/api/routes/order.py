@@ -73,7 +73,7 @@ async def create_order(
            user_id=new_order.user_id,
            status_id=new_order.status_id,
            total_price=new_order.total_price,
-           created_at=new_order.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+           created_at=new_order.created_at,
            updated_at=new_order.updated_at,
            status=new_order.status,
            products=new_order.products
@@ -155,3 +155,38 @@ async def get_order_details(
         return response    
 
 
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_order(
+    order_id: UUID = Path(..., description="The ID of the order to be canceled"),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Step 1: Order Status Check
+    if order_id not in orders_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    order = orders_db[order_id]
+
+    # Check if the order belongs to the current user
+    if str(order.user_id) != str(current_user.get("id")):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to cancel this order")
+
+    # Check if the order status is "pending"
+    if order.status.name.lower() != "pending":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only pending orders can be canceled")
+
+    # Step 2: Cancel Order Logic
+    canceled_status = next((status for status in statusOrders_db.values() if status["name"].lower() == "canceled"), None)
+    if not canceled_status:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Canceled status not found in the system")
+
+    order.status_id = canceled_status["id"]
+    order.status = StatusModel(**canceled_status)
+    order.updated_at = datetime.now(timezone.utc)
+
+    # Update the order in the database
+    orders_db[order_id] = order
+
+    # Step 3: Response
+    # FastAPI will automatically return a 204 No Content status
+    return None

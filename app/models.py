@@ -309,14 +309,6 @@ class UpdateOrderStatusResponseModel(BaseModel):
         }
     
 
-class FullOrderResponseModel(Order):
-    products: list[OrderProductResponseModel]
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S'),
-            Decimal: lambda v: str(v)
-        }
         
 class GetOrderResponseModel(BaseModel):
     id: UUID
