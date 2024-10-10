@@ -30,7 +30,7 @@ async def create_status(
     return new_status
 
 
-@router.get("/{status_id}", response_model=CreateStatusResponseModel)
+@router.get("/{status_id}", response_model=CreateStatusResponseModel,status_code=status.HTTP_200_OK)
 async def get_status(
     status_id: UUID, current_user: User = Depends(get_current_admin_user)
 ):
@@ -41,7 +41,7 @@ async def get_status(
     return CreateStatusResponseModel(**statusOrders_db[status_id])
 
 
-@router.put("/{status_id}", response_model=CreateStatusResponseModel)
+@router.put("/{status_id}", response_model=CreateStatusResponseModel,status_code=status.HTTP_200_OK)
 async def update_status(
     status_id: UUID,
     status_update: UpdateStatusRequestModel,
@@ -72,7 +72,7 @@ async def update_status(
     return CreateStatusResponseModel(**updated_status)
 
 
-@router.delete("/{status_id}")
+@router.delete("/{status_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_status(
     status_id: UUID, current_user: User = Depends(get_current_admin_user)
 ):
@@ -82,7 +82,7 @@ async def remove_status(
         )
 
     for order in orders_db.values():
-        if order["status_id"] == status_id:
+        if str(order.status_id) == str(status_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Can't delete status. It is used in an order. Consider creating a new status for obsolete items.",

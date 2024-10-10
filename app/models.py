@@ -151,13 +151,13 @@ class StatusModel(StatusBaseModel):
     id: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
+    
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
 
 
 class CreateStatusResponseModel(StatusModel):
     pass
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
         
         
         
@@ -242,3 +242,96 @@ class GetProductResponseModel(ProductBaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        
+# ------------ Order Model -----------------#
+
+# Order Product Models
+class OrderProductBaseModel(BaseModel):
+    product_id: UUID
+    quantity: int = Field(..., ge=1)
+
+class OrderProduct(OrderProductBaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    order_id: UUID
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+    
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+    
+    
+
+class OrderProductResponseModel(OrderProduct):
+    product: 'Product'  # This will be defined later or imported from another module
+
+# Order Models
+class OrderBaseModel(BaseModel):
+    user_id: UUID
+    status_id: UUID
+    total_price: Decimal = Field(..., ge=Decimal('0.01'), max_digits=10, decimal_places=2)
+
+class Order(OrderBaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+    status: Optional[StatusModel] = None
+    products: list[OrderProduct] = []
+    
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+
+# Request Models
+class CreateOrderProductRequestModel(OrderProductBaseModel):
+    pass
+
+class CreateOrderRequestModel(BaseModel):
+    products: list[CreateOrderProductRequestModel]
+
+class UpdateOrderStatusRequestModel(BaseModel):
+    status: str = Field(..., description="New status for the order")
+
+# Response Models
+class CreateOrderResponseModel(Order):
+    pass
+
+class UpdateOrderStatusResponseModel(BaseModel):
+    id: UUID
+    user_id: UUID
+    total_price: Decimal
+    status: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S'),
+            Decimal: lambda v: str(v)
+        }
+    
+
+        
+class GetOrderResponseModel(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: Decimal = Field(..., description="Total price of the order", decimal_places=2)
+    created_at: datetime
+    updated_at: Optional[datetime]
+    products: list[OrderProductBaseModel]
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+class GetOrderToUserResponseModel(BaseModel):
+    id: UUID
+    status: str
+    total_price: Decimal
+    created_at: datetime
+    updated_at: Optional[datetime] = Field(default=None)
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
+        }
