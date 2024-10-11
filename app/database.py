@@ -1,8 +1,9 @@
 from datetime import datetime
 from uuid import uuid4
-
 from app.utils import get_password_hash
-
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 users_db = {
 
@@ -34,3 +35,18 @@ statusOrders_db = {}
 orders_db = {}
 
 products_db = {}
+
+
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:adminpass@db:5432/fastapi_db"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
