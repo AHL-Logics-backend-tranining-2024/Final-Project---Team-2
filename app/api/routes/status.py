@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.oauth import get_current_admin_user
-from app.models import *
+from app.schemas import *
 from app.database import statusOrders_db, orders_db
 
 router = APIRouter()

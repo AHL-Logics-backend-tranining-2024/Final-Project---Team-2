@@ -1,244 +1,76 @@
-from datetime import datetime, timezone
-from decimal import Decimal
-import re
-from typing import Optional
-from uuid import UUID, uuid4
-from pydantic import BaseModel, EmailStr, Field, validator
-from app.utils import get_password_hash, verify_password
+from datetime import datetime
+import uuid
+from app.connection_to_db import Base
+from sqlalchemy.orm import Mapped, mapped_column,relationship
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String
 
 
-# ------------ Token Model -----------------#
-# Token Model for handling authentication tokens
-class Token(BaseModel):
-    access_token: str  # The access token for authentication
-    token_type: str  # The type of the token (e.g., "bearer")
+class User(Base):
+    __tablename__ = "users"
 
-
-# TokenData Model for storing user information associated with the token
-class TokenData(BaseModel):
-    sub: Optional[UUID] = None
-
-
-# ------------ User Model -----------------#
-class UserBaseModel(BaseModel):
-    username: str
-    email: EmailStr
-
-
-class UserCreateRequestModel(UserBaseModel):
-    password: str = Field(
-        ...,
-        min_length=8,
-        example="Jibreen123@",
-    )
-
-    @validator("password")
-    def validate_password(cls, password: str):
-        # Check for at least one lowercase letter
-        if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter.")
-        # Check for at least one uppercase letter
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter.")
-        # Check for at least one digit
-        if not re.search(r"\d", password):
-            raise ValueError("Password must contain at least one digit.")
-        # Check for at least one special character
-        if not re.search(r"[@$!%*?&]", password):
-            raise ValueError("Password must contain at least one special character.")
-
-        return password
-
-
-class User(UserBaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    hashed_password: str
-    is_admin: bool = False  # Default values for admin status
-    is_active: bool = True  # Default values for active status
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: Optional[datetime] = Field(default=None)
-
-    def set_password(self, password: str):
-        self.hashed_password = get_password_hash(password)
-
-    def verify_password(self, password: str):
-        return verify_password(password, self.hashed_password)
-
-
-class CreateUserResponseModel(UserBaseModel):
-    id: UUID
-    is_admin: bool
-    is_active: bool
-    created_at: datetime
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
-
-
-class UpdateUserRequestModel(BaseModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = Field(min_length=8, example="Jibreen123@")
-
-    @validator("password")
-    def validate_password(cls, password: str):
-        # Check for at least one lowercase letter
-        if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter.")
-        # Check for at least one uppercase letter
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter.")
-        # Check for at least one digit
-        if not re.search(r"\d", password):
-            raise ValueError("Password must contain at least one digit.")
-        # Check for at least one special character
-        if not re.search(r"[@$!%*?&]", password):
-            raise ValueError("Password must contain at least one special character.")
-
-        return password
-
-
-class UpdatedUserResponseModel(UserBaseModel):
-    id: UUID
-    username: str
-    email: EmailStr
-    is_admin: bool
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
-
-
-class GetUserResponseModel(UserBaseModel):
-    id: UUID
-    username: str
-    email: EmailStr
-    is_admin: bool
-    is_active: bool
-    created_at: datetime
-    updated_at: Optional[datetime]
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
-
-
-class ChangeRoleRequestModel(BaseModel):
-    user_id: str = Field(..., description="The unique identifier of the user")
-    is_admin: bool = Field(..., description="The new admin status for the user")
-
-
-# ------------ Status Model -----------------#
-# Models
-class StatusBaseModel(BaseModel):
-    name: str = Field(
-        ...,
-        examples=["Pending", "Processing", "Completed", "Canceled"],
-        description="Status name, e.g. Pending, Processing, Completed, Canceled",
-    )
-
-
-class CreateStatusRequestModel(StatusBaseModel):
-    pass
-
-
-class UpdateStatusRequestModel(StatusBaseModel):
-    pass
-
-
-class StatusModel(StatusBaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: Optional[datetime] = Field(default=None)
-
-
-class CreateStatusResponseModel(StatusModel):
-    pass
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
-        
-        
-        
-# ------------ Prodcut Model -----------------#
-class ProductBaseModel(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    price: Decimal = Field(...,description="Product price", ge=Decimal('0.01'), decimal_places=2)
-    description: Optional[str] = Field(None, max_length=1000)
-    stock: Optional[int] = Field(default=0, ge=0)
-    isAvailable: Optional[bool] = Field(default=True)
-
-
-class Product(ProductBaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: Optional[datetime] = Field(default=None)
+    id:Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    username:Mapped[str] = mapped_column(String, index=True)
+    email:Mapped[str] = mapped_column(String, unique=True, index=True)
+    hashed_password:Mapped[str] = mapped_column(String)
+    is_admin:Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active:Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at:Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at:Mapped[datetime] = mapped_column(DateTime, nullable=True)
     
+    orders = relationship("Order", back_populates="user")
+    
+class Status(Base):
+    __tablename__ = 'statuses'
 
-class CreateProductRequestModel(ProductBaseModel):
-    pass  # All fields are inherited from ProductBaseModel
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name: Mapped[str] = mapped_column(String, unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
-class CreateProductResponseModel(ProductBaseModel):
-    id: UUID
-    created_at: datetime
+    orders: Mapped[list["Order"]] = relationship("Order", back_populates="status")
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
-        }
+# Product class
+class Product(Base):
+    __tablename__ = 'products'
 
-class UpdatedProductRequestModel(BaseModel):
-    name: Optional[str] =  Field(None, min_length=1, max_length=100)
-    price: Optional[Decimal] = Field(None,description="Product price", ge=Decimal('0.01'), decimal_places=2)
-    description: Optional[str] = Field(None, max_length=1000)
-    stock: Optional[int] = Field(None, ge=0)
-    isAvailable: Optional[bool] = Field(default=None)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name: Mapped[str] = mapped_column(String, index=True)
+    price: Mapped[Numeric] = mapped_column(Numeric(10, 2))
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+    isAvailable: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-class UpdatedProductResponseModel(ProductBaseModel):
-    id:UUID
-    created_at: datetime
-    updated_at: datetime
+    order_products: Mapped[list["OrderProduct"]] = relationship("OrderProduct", back_populates="product")
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-class SearchRequest:
-    def __init__(self, name: str = None, min_price: float = None, max_price: float = None, isAvailable: bool = None, page: int = 1, page_size: int = 20, sort_by: str = "name", sort_order: str = "asc"):
-        self.name = name
-        self.min_price = min_price
-        self.max_price = max_price
-        self.isAvailable = isAvailable
-        self.page = page
-        self.page_size = page_size
-        self.sort_by = sort_by
-        self.sort_order = sort_order
-        
-class GetProductBySearchResponseModel(ProductBaseModel):
-    id: UUID
-    name: str
-    price: Decimal
-    stock: int
-    isAvailable: bool
-        
-class SearchResult(BaseModel):
-    page: int
-    total_pages: int
-    products_per_page: int
-    total_products: int
-    products: list[GetProductBySearchResponseModel]
+# Order class
+class Order(Base):
+    __tablename__ = 'orders'
 
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('users.id'))
 
-class GetProductResponseModel(ProductBaseModel):
-    id: UUID
-    name: str
-    price: Decimal
-    stock: int
-    isAvailable: bool
-    created_at: datetime
-    updated_at: Optional[datetime]
+    user: Mapped["User"] = relationship("User", back_populates="orders")
+    status_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('statuses.id'))
+    total_price: Mapped[Numeric] = mapped_column(Numeric(10, 2))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+    status: Mapped["Status"] = relationship("Status", back_populates="orders")
+    order_products: Mapped[list["OrderProduct"]] = relationship("OrderProduct", back_populates="order")
+
+# OrderProduct class
+class OrderProduct(Base):
+    __tablename__ = 'order_products'
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    order_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('orders.id'))
+    product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('products.id'))
+    quantity: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="order_products")
+    product: Mapped["Product"] = relationship("Product", back_populates="order_products")
