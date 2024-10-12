@@ -1,7 +1,9 @@
-from datetime import timezone
+from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.oauth import get_current_admin_user, get_current_user
+from app.connection_to_db import get_db
+from app.exception import EmailAlreadyExistsException
 from app.schemas import (
     ChangeRoleRequestModel,
     CreateUserResponseModel,
@@ -11,9 +13,11 @@ from app.schemas import (
     User,
     UserCreateRequestModel,
 )
+from app.services.user_service import UserService
 from app.utils import get_password_hash
 from app.api.auth.auth import *
 from app.database import users_db
+from sqlalchemy.orm import Session
 
 # Router and fake database setup
 router = APIRouter()
@@ -23,32 +27,15 @@ router = APIRouter()
 @router.post(
     "/", response_model=CreateUserResponseModel, status_code=status.HTTP_201_CREATED
 )
-async def create_user(user: UserCreateRequestModel):
-    # Check if user already exists by email
-    if any(u.get("email") == user.email for u in users_db.values()):
+def create_user(user: UserCreateRequestModel, db: Session = Depends(get_db)):
+   try:
+        user_service = UserService(db)
+        return user_service.create_user(user)
+   except EmailAlreadyExistsException:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
         )
-
-    # Create new user and set hashed password
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        hashed_password=get_password_hash(user.password),  # Hash the password
-    )
-
-    # Store in fake_db
-    users_db[str(new_user.id)] = new_user.dict()
-
-    # Return response excluding sensitive fields
-    return CreateUserResponseModel(
-        id=new_user.id,
-        username=new_user.username,
-        email=new_user.email,
-        is_admin=new_user.is_admin,
-        is_active=new_user.is_active,
-        created_at=new_user.created_at,
-    )
 
 
 @router.put("/change_role", status_code=status.HTTP_200_OK)
