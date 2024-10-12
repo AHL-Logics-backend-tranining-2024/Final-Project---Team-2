@@ -7,10 +7,10 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, 
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id:Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    username:Mapped[str] = mapped_column(String, unique=True, index=True)
+    username:Mapped[str] = mapped_column(String, index=True)
     email:Mapped[str] = mapped_column(String, unique=True, index=True)
     hashed_password:Mapped[str] = mapped_column(String)
     is_admin:Mapped[bool] = mapped_column(Boolean, default=False)

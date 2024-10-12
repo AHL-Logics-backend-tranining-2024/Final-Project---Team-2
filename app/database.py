@@ -37,7 +37,7 @@ orders_db = {}
 products_db = {}
 
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:adminpass@db:5432/fastapi_db"
+SQLALCHEMY_DATABASE_URL = "postgresql://admin:adminpass@db:5432/fastapi_db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

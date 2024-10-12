@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.auth.oauth import get_current_admin_user
-from app.models import CreateProductRequestModel, CreateProductResponseModel, GetProductBySearchResponseModel, GetProductResponseModel, Product, ProductBaseModel, SearchRequest, SearchResult, UpdatedProductRequestModel, UpdatedProductResponseModel, User
+from app.schemas import CreateProductRequestModel, CreateProductResponseModel, GetProductBySearchResponseModel, GetProductResponseModel, Product, ProductBaseModel, SearchRequest, SearchResult, UpdatedProductRequestModel, UpdatedProductResponseModel, User
 from app.database import products_db
 
 router = APIRouter()

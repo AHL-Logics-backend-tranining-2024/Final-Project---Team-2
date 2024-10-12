@@ -5,7 +5,7 @@ services:
     build:
       dockerfile: Dockerfile
     environment:
-      SECRET_KEY: "your_secret_key"                     # Add this
+      SECRET_KEY: "fddgdfgdfgdfgdsdewfwefwefewfewf343434434" # Add this
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
     ports:
       - "8000:8000"

@@ -63,6 +63,9 @@ class User(UserBaseModel):
 
     def verify_password(self, password: str):
         return verify_password(password, self.hashed_password)
+    
+    class Config:
+        orm_mode = True
 
 
 class CreateUserResponseModel(UserBaseModel):
@@ -73,6 +76,8 @@ class CreateUserResponseModel(UserBaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
+        
 
 
 class UpdateUserRequestModel(BaseModel):
@@ -109,6 +114,7 @@ class UpdatedUserResponseModel(UserBaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
 
 
 class GetUserResponseModel(UserBaseModel):
@@ -122,6 +128,7 @@ class GetUserResponseModel(UserBaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
 
 
 class ChangeRoleRequestModel(BaseModel):
