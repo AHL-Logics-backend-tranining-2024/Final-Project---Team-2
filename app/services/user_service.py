@@ -1,11 +1,8 @@
 
 from datetime import datetime, timezone
-import logging
-from sqlite3 import IntegrityError
 from uuid import UUID
 from fastapi import HTTPException,status
 from app.models import User
-from app.exception import EmailAlreadyExistsException
 from app.schemas import ChangeRoleRequestModel, CreateUserResponseModel, GetUserResponseModel, UpdateUserRequestModel, UpdatedUserResponseModel, UserCreateRequestModel
 from sqlalchemy.orm import Session
 
