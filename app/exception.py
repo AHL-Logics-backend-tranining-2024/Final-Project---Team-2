@@ -1,2 +1,3 @@
 class EmailAlreadyExistsException(Exception):
     pass
+
