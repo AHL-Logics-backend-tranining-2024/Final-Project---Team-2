@@ -4,3 +4,5 @@ pyjwt
 python-dotenv
 pydantic-settings
 python-jose
+sqlalchemy
+psycopg2-binary
