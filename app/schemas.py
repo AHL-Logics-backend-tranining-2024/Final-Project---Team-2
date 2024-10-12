@@ -63,6 +63,8 @@ class User(UserBaseModel):
 
     def verify_password(self, password: str):
         return verify_password(password, self.hashed_password)
+    
+    
 
 
 class CreateUserResponseModel(UserBaseModel):

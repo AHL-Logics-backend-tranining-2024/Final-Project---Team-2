@@ -1,6 +1,6 @@
 from datetime import datetime
 import uuid
-from app.connection_to_db import Base
+from app.connection_to_db import Base,engine
 from sqlalchemy.orm import Mapped, mapped_column,relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String
@@ -74,3 +74,4 @@ class OrderProduct(Base):
 
     order: Mapped["Order"] = relationship("Order", back_populates="order_products")
     product: Mapped["Product"] = relationship("Product", back_populates="order_products")
+    
