@@ -17,7 +17,7 @@ services:
     environment:
       POSTGRES_USER: admin # Corrected the spelling
       POSTGRES_PASSWORD: adminpass # Corrected the spelling
-      POSTGRES_DB: fastapi_db # Corrected the spelling
+      POSTGRES_DB: fastapi_db_2 # Corrected the spelling
     ports:
       - "5432:5432"
     volumes:
