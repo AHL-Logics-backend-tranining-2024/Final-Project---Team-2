@@ -7,7 +7,7 @@ from jose import JWTError
 import jwt
 from app.settings import settings
 from app.utils import ALGORITHM
-from app.models import User
+from app.schemas import User
 from app.database import users_db
 
 
