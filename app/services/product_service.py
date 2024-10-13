@@ -12,7 +12,7 @@ from app.schemas import (
 
 
 class ProductService:
-    def _init_(self, db: Session):
+    def __init__(self, db: Session):
         self.db = db
 
     def create_product(self, product: CreateProductRequestModel) -> Product:
