@@ -6,6 +6,7 @@ services:
     environment:
       SECRET_KEY: "fddgdfgdfgdfgdsdewfwefwefewfewf343434434" # Add this
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      SQLALCHEMY_DATABASE_URL: "postgresql://admin:adminpass@db:5432/fastapi_db"
     ports:
       - "8000:8000"
     depends_on:
