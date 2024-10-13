@@ -3,7 +3,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.oauth import get_current_admin_user, get_current_user
 from app.connection_to_db import get_db
-from app.exception import EmailAlreadyExistsException
 from app.schemas import (
     ChangeRoleRequestModel,
     CreateUserResponseModel,
