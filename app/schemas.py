@@ -153,17 +153,29 @@ class UpdateStatusRequestModel(StatusBaseModel):
     pass
 
 
-class StatusModel(StatusBaseModel):
+class Status(StatusBaseModel):
     id: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
 
+    class Config:
+        orm_mode = True
 
-class CreateStatusResponseModel(StatusModel):
+
+class CreateStatusResponseModel(Status):
     pass
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
+
+
+class UpdateStatusResponseModel(Status):
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
 
 
 # ------------ Prodcut Model -----------------#
