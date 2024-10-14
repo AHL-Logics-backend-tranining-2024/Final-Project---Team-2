@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import math
 from uuid import UUID
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
@@ -6,7 +7,9 @@ from fastapi import HTTPException, status
 from app.models import Product
 from app.schemas import (
     CreateProductRequestModel,
+    GetProductBySearchResponseModel,
     SearchRequest,
+    SearchResult,
     UpdatedProductRequestModel,
 )
 
@@ -85,45 +88,44 @@ class ProductService:
             )
         return product
 
-    def search_products(self, search_request: SearchRequest):
+    def search_products(self, search_request: SearchRequest) -> SearchResult:
         query = self.db.query(Product)
 
+        # Apply filters based on search parameters
         if search_request.name:
             query = query.filter(Product.name.ilike(f"%{search_request.name}%"))
-        if search_request.min_price:
+        if search_request.min_price is not None:
             query = query.filter(Product.price >= search_request.min_price)
-        if search_request.max_price:
+        if search_request.max_price is not None:
             query = query.filter(Product.price <= search_request.max_price)
         if search_request.isAvailable is not None:
             query = query.filter(Product.isAvailable == search_request.isAvailable)
 
-        # Sort
-        if search_request.sort_by == "price":
-            query = query.order_by(
-                desc(Product.price)
-                if search_request.sort_order == "desc"
-                else asc(Product.price)
-            )
-        else:
-            query = query.order_by(
-                desc(Product.name)
-                if search_request.sort_order == "desc"
-                else asc(Product.name)
-            )
+        # Apply sorting
+        sort_column = (
+            Product.price if search_request.sort_by == "price" else Product.name
+        )
+        order = (
+            desc(sort_column)
+            if search_request.sort_order == "desc"
+            else asc(sort_column)
+        )
+        query = query.order_by(order)
 
-        # Paginate
+        # Paginate results
         total_products = query.count()
-        total_pages = -(-total_products // search_request.page_size)
+        total_pages = math.ceil(total_products / search_request.page_size)
         products = (
             query.offset((search_request.page - 1) * search_request.page_size)
             .limit(search_request.page_size)
             .all()
         )
 
-        return {
-            "page": search_request.page,
-            "total_pages": total_pages,
-            "products_per_page": search_request.page_size,
-            "total_products": total_products,
-            "products": products,
-        }
+        # Create the SearchResult response
+        return SearchResult(
+            page=search_request.page,
+            total_pages=total_pages,
+            products_per_page=search_request.page_size,
+            total_products=total_products,
+            products=[GetProductBySearchResponseModel.from_orm(p) for p in products],
+        )

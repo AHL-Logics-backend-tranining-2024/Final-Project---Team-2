@@ -219,26 +219,15 @@ class UpdatedProductResponseModel(ProductBaseModel):
         from_attributes = True
 
 
-class SearchRequest:
-    def __init__(
-        self,
-        name: str = None,
-        min_price: float = None,
-        max_price: float = None,
-        isAvailable: bool = None,
-        page: int = 1,
-        page_size: int = 20,
-        sort_by: str = "name",
-        sort_order: str = "asc",
-    ):
-        self.name = name
-        self.min_price = min_price
-        self.max_price = max_price
-        self.isAvailable = isAvailable
-        self.page = page
-        self.page_size = page_size
-        self.sort_by = sort_by
-        self.sort_order = sort_order
+class SearchRequest(BaseModel):
+    name: Optional[str] = Field(default="")
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    isAvailable: Optional[bool] = None
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=20, ge=1)
+    sort_by: str = Field(default="name")
+    sort_order: str = Field(default="asc")
 
 
 class GetProductBySearchResponseModel(ProductBaseModel):

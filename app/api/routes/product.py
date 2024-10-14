@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+from typing import Annotated
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.api.auth.oauth import get_current_admin_user
 from app.connection_to_db import get_db
 from app.schemas import (
@@ -74,21 +75,11 @@ def get_all_products(db: Session = Depends(get_db)):
 
 @router.get("/search", response_model=SearchResult, status_code=status.HTTP_200_OK)
 async def search_products(
-    search_request: SearchRequest = Depends(SearchRequest),
-    db: Session = Depends(get_db),
+    search_request: Annotated[SearchRequest, Query()], db: Session = Depends(get_db)
 ):
     product_service = ProductService(db)
     search_result = product_service.search_products(search_request)
-    return SearchResult(
-        page=search_result["page"],
-        total_pages=search_result["total_pages"],
-        products_per_page=search_result["products_per_page"],
-        total_products=search_result["total_products"],
-        products=[
-            GetProductBySearchResponseModel.from_orm(p)
-            for p in search_result["products"]
-        ],
-    )
+    return search_result
 
 
 @router.get(
