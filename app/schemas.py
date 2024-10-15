@@ -63,11 +63,9 @@ class User(UserBaseModel):
 
     def verify_password(self, password: str):
         return verify_password(password, self.hashed_password)
-    
+
     class Config:
         orm_mode = True
-    
-    
 
 
 class CreateUserResponseModel(UserBaseModel):
@@ -166,13 +164,14 @@ class CreateStatusResponseModel(StatusModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
-        
-        
-        
+
+
 # ------------ Prodcut Model -----------------#
 class ProductBaseModel(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    price: Decimal = Field(...,description="Product price", ge=Decimal('0.01'), decimal_places=2)
+    price: Decimal = Field(
+        ..., description="Product price", ge=Decimal("0.01"), decimal_places=2
+    )
     description: Optional[str] = Field(None, max_length=1000)
     stock: Optional[int] = Field(default=0, ge=0)
     isAvailable: Optional[bool] = Field(default=True)
@@ -182,55 +181,66 @@ class Product(ProductBaseModel):
     id: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
-    
+
+    class Config:
+        orm_mode = True
+
 
 class CreateProductRequestModel(ProductBaseModel):
     pass  # All fields are inherited from ProductBaseModel
+
 
 class CreateProductResponseModel(ProductBaseModel):
     id: UUID
     created_at: datetime
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
-        }
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
+
 
 class UpdatedProductRequestModel(BaseModel):
-    name: Optional[str] =  Field(None, min_length=1, max_length=100)
-    price: Optional[Decimal] = Field(None,description="Product price", ge=Decimal('0.01'), decimal_places=2)
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    price: Optional[Decimal] = Field(
+        None, description="Product price", ge=Decimal("0.01"), decimal_places=2
+    )
     description: Optional[str] = Field(None, max_length=1000)
     stock: Optional[int] = Field(None, ge=0)
     isAvailable: Optional[bool] = Field(default=None)
 
+
 class UpdatedProductResponseModel(ProductBaseModel):
-    id:UUID
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-class SearchRequest:
-    def __init__(self, name: str = None, min_price: float = None, max_price: float = None, isAvailable: bool = None, page: int = 1, page_size: int = 20, sort_by: str = "name", sort_order: str = "asc"):
-        self.name = name
-        self.min_price = min_price
-        self.max_price = max_price
-        self.isAvailable = isAvailable
-        self.page = page
-        self.page_size = page_size
-        self.sort_by = sort_by
-        self.sort_order = sort_order
-        
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
+
+
+class SearchRequest(BaseModel):
+    name: Optional[str] = Field(default="")
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    isAvailable: Optional[bool] = None
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=20, ge=1)
+    sort_by: str = Field(default="name")
+    sort_order: str = Field(default="asc")
+
+
 class GetProductBySearchResponseModel(ProductBaseModel):
     id: UUID
     name: str
     price: Decimal
     stock: int
     isAvailable: bool
-        
+
+    class Config:
+        from_attributes = True
+
+
 class SearchResult(BaseModel):
     page: int
     total_pages: int
@@ -250,3 +260,4 @@ class GetProductResponseModel(ProductBaseModel):
 
     class Config:
         json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%d %H:%M:%S")}
+        from_attributes = True
