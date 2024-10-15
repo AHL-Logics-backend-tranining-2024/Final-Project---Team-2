@@ -7,7 +7,7 @@ from app.schemas import CreateStatusRequestModel, UpdateStatusRequestModel
 
 
 class StatusService:
-    def _init_(self, db: Session):
+    def __init__(self, db: Session):
         self.db = db
 
     def create_status(self, status: CreateStatusRequestModel) -> Status:
