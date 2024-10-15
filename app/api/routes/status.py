@@ -1,8 +1,18 @@
 from typing import List
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.oauth import get_current_admin_user
-from app.schemas import *
+from app.connection_to_db import get_db
 from app.database import statusOrders_db, orders_db
+from app.models import User
+from app.schemas import (
+    CreateStatusRequestModel,
+    CreateStatusResponseModel,
+    UpdateStatusRequestModel,
+    UpdateStatusResponseModel,
+)
+from app.services.status_service import StatusService
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -13,63 +23,42 @@ router = APIRouter()
 async def create_status(
     status: CreateStatusRequestModel,
     current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
 ):
-
-    if any(
-        existing_status["name"].lower() == status.name.lower()
-        for existing_status in statusOrders_db.values()
-    ):
-        raise HTTPException(status_code=400, detail="Status name already exists")
-
-    new_status = StatusModel(
-        name=status.name, created_at=datetime.now(timezone.utc), updated_at=None
-    )
-
-    statusOrders_db[new_status.id] = new_status.dict()
-
-    return new_status
+    status_service = StatusService(db)
+    new_status = status_service.create_status(status)
+    return CreateStatusResponseModel.from_orm(new_status)
 
 
-@router.get("/{status_id}", response_model=CreateStatusResponseModel)
+@router.get(
+    "/{status_id}",
+    response_model=CreateStatusResponseModel,
+    status_code=status.HTTP_200_OK,
+)
 async def get_status(
-    status_id: UUID, current_user: User = Depends(get_current_admin_user)
+    status_id: UUID,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
 ):
-    if status_id not in statusOrders_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Status not found"
-        )
-    return CreateStatusResponseModel(**statusOrders_db[status_id])
+    status_service = StatusService(db)
+    status = status_service.get_status(status_id)
+    return CreateStatusResponseModel.from_orm(status)
 
 
-@router.put("/{status_id}", response_model=CreateStatusResponseModel)
+@router.put(
+    "/{status_id}",
+    response_model=CreateStatusResponseModel,
+    status_code=status.HTTP_200_OK,
+)
 async def update_status(
     status_id: UUID,
     status_update: UpdateStatusRequestModel,
     current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
 ):
-
-    if status_id not in statusOrders_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Status not found"
-        )
-
-    if any(
-        existing_status["name"].lower() == status_update.name.lower()
-        for existing_status in statusOrders_db.values()
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Status with name '{status_update.name}' already exists",
-        )
-
-    current_status = statusOrders_db[status_id]
-    updated_status = {
-        **current_status,
-        "name": status_update.name,
-        "updated_at": datetime.now(timezone.utc),
-    }
-    statusOrders_db[status_id] = updated_status
-    return CreateStatusResponseModel(**updated_status)
+    status_service = StatusService(db)
+    updated_status = status_service.update_status(status_id, status_update)
+    return UpdateStatusResponseModel.from_orm(updated_status)
 
 
 @router.delete("/{status_id}")
