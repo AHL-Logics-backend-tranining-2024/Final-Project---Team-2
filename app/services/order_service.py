@@ -11,7 +11,7 @@ class OrderService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_order(self, user_id: UUID, order_request: CreateOrderRequestModel) -> CreateOrderResponseModel:
+    """ def create_order(self, user_id: UUID, order_request: CreateOrderRequestModel) -> CreateOrderResponseModel:
         # Step 1: Get pending status
         pending_status = self._get_pending_status()
 
@@ -102,7 +102,64 @@ class OrderService:
         self.db.add_all(order_products_list)
         self.db.commit()  # Commit the order products
 
-        return total_price
+        return total_price """
+
+    def create_order(self, user_id: UUID, order_request: CreateOrderRequestModel) -> CreateOrderResponseModel:
+        
+            # Get pending status
+            pending_status = self.db.query(Status).filter(Status.name == "Pending").first()
+            if not pending_status:
+                raise HTTPException(status_code=400, detail="Pending status not found")
+
+            # Create new order with associated order products
+            new_order = Order(
+                user_id=user_id,
+                status_id=pending_status.id,
+                total_price=Decimal('0.00'),
+                created_at=datetime.now(timezone.utc),
+                order_products=[
+                    OrderProduct(
+                        product_id=item.product_id,
+                        quantity=item.quantity,
+                        created_at=datetime.now(timezone.utc)
+                    ) for item in order_request.products
+                ]
+            )
+
+            # Add the new order to the session
+            self.db.add(new_order)
+
+            # Validate products and update stock in a single query
+            product_ids = [item.product_id for item in order_request.products]
+            products = self.db.query(Product).filter(Product.id.in_(product_ids)).all()
+            product_map = {str(product.id): product for product in products}
+
+            for item in order_request.products:
+                product = product_map.get(str(item.product_id))
+                if not product:
+                    raise HTTPException(status_code=400, detail=f"Product with id {item.product_id} not found")
+                if product.stock < item.quantity:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient stock for product {product.name}. Available: {product.stock}, Requested: {item.quantity}"
+                    )
+                product.stock -= item.quantity
+                new_order.total_price += product.price * item.quantity
+
+            # Commit the transaction
+            self.db.commit()
+            self.db.refresh(new_order)
+
+            # Create response model
+            response_data = CreateOrderResponseModel(
+                id=new_order.id,
+                user_id=new_order.user_id,
+                status=pending_status.name,
+                total_price=new_order.total_price,
+                created_at=new_order.created_at
+            )
+
+            return response_data
 
     def update_order_status(self, order_id: UUID, new_status: str) -> UpdateOrderStatusResponseModel:
         order = self.db.query(Order).get(order_id)

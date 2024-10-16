@@ -346,8 +346,8 @@ class UpdateOrderStatusResponseModel(BaseModel):
     user_id: UUID
     total_price: Decimal
     status: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime
+    updated_at: datetime
     
     class Config:
         json_encoders = {
