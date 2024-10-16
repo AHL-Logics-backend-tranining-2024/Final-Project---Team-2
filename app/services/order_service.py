@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session,joinedload
-from sqlalchemy.exc import SQLAlchemyError
 from app.models import Order,Product,Status,OrderProduct
 from app.schemas import CreateOrderRequestModel, CreateOrderResponseModel, GetOrderResponseModel, OrderProductBaseModel, UpdateOrderStatusResponseModel
 
