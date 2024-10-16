@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.oauth import get_current_admin_user
 from app.connection_to_db import get_db
 from app.database import statusOrders_db, orders_db
-from app.models import User
+from app.models import Order, User
 from app.schemas import (
     CreateStatusRequestModel,
     CreateStatusResponseModel,
@@ -61,20 +61,11 @@ async def update_status(
     return UpdateStatusResponseModel.from_orm(updated_status)
 
 
-@router.delete("/{status_id}")
+@router.delete("/{status_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def remove_status(
-    status_id: UUID, current_user: User = Depends(get_current_admin_user)
+    status_id: UUID,
+    current_user: User = Depends(get_current_admin_user),
+    db:Session = Depends(get_db)
 ):
-    if status_id not in statusOrders_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Status not found"
-        )
-
-    for order in orders_db.values():
-        if order["status_id"] == status_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Can't delete status. It is used in an order. Consider creating a new status for obsolete items.",
-            )
-
-    statusOrders_db.pop(status_id)
+    status_service = StatusService(db)
+    return status_service.remove_status(status_id)

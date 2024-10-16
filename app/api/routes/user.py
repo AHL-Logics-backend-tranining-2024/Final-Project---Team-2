@@ -6,6 +6,7 @@ from app.connection_to_db import get_db
 from app.schemas import (
     ChangeRoleRequestModel,
     CreateUserResponseModel,
+    GetOrderToUserResponseModel,
     GetUserResponseModel,
     UpdateUserRequestModel,
     UpdatedUserResponseModel,
@@ -64,32 +65,13 @@ async def update_user(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: UUID, current_user: User = Depends(get_current_user)):
-
-    # Step 1 & 2: Authenticate User and Validate User ID
-    if str(current_user.get("id")) != str(user_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. You can only update your own details.",
-        )
-
-    # Retrieve the current user data
-    user_data = users_db.get(str(user_id))
-
-    if not user_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    """ 
-    .............................................
-    I am waiting for the order model to be ready.
-    .............................................
-    """
-
-    users_db.pop(str(user_id))
-
-    return
+async def delete_user(
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+    ):
+    user_service = UserService(db)
+    return user_service.delete_user(current_user.id, user_id)
 
 
 @router.get(
@@ -121,35 +103,12 @@ async def get_user_details(
     return user
 
 
-@router.get("/{user_id}/orders", status_code=status.HTTP_200_OK)
+@router.get("/{user_id}/orders",response_model=list[GetOrderToUserResponseModel], status_code=status.HTTP_200_OK)
 async def get_orders_for_user(
-    user_id: UUID, current_user: User = Depends(get_current_user)
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-
-    # Validate User ID
-    if user_id != current_user.get("id"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-    """
-     # Retrieve Orders
-     orders = [
-        order
-        for order in orders_db.values()
-        if order["user_id"] == user_id
-     ]
-
-     # Format Response
-     formatted_orders = [
-        {
-            "id": order["id"],
-            "status": order["status"],
-            "total_price": order["total_price"],
-            "created_at": order["created_at"],
-            "updated_at": order["updated_at"]
-        }
-        for order in orders
-     ]
-
-     # Return Order List
-     return formatted_orders
-    """
+# Step 2: Retrieve User Data
+    user_service = UserService(db)
+    return user_service.getOrdersForUser(user_id)
