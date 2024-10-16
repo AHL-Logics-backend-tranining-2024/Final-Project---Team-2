@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.models import Product
+from app.models import OrderProduct, Product
 from app.schemas import (
     CreateProductRequestModel,
     GetProductBySearchResponseModel,
@@ -73,6 +73,18 @@ class ProductService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Product with ID {product_id} not found.",
             )
+            
+        # Step 2: Check if the product is associated with any orders
+        is_product_in_order = self.db.query(OrderProduct).filter(
+         OrderProduct.product_id == product_id
+        ).first()
+
+        if is_product_in_order:
+         raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete product because it is associated with an existing order.",
+        )
+            
         self.db.delete(product)
         self.db.commit()
 

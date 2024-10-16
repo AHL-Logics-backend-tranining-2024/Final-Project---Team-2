@@ -379,6 +379,7 @@ class GetOrderToUserResponseModel(BaseModel):
     updated_at: Optional[datetime] = Field(default=None)
     
     class Config:
+        from_attributes=True
         json_encoders = {
             datetime: lambda v: v.strftime('%Y-%m-%d %H:%M:%S')
         }
