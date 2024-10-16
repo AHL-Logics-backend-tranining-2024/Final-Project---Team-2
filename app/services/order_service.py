@@ -13,35 +13,44 @@ class OrderService:
         self.db = db
 
     def create_order(self, user_id: UUID, order_request: CreateOrderRequestModel) -> CreateOrderResponseModel:
-        total_price = Decimal('0.00')
+        # Step 1: Get pending status
+        pending_status = self._get_pending_status()
 
-        # Get pending status
+        # Step 2: Fetch and validate products
+        product_map, total_price = self._validate_products(order_request.products)
+
+        # Step 3: Create new order
+        new_order = self._create_new_order(user_id, pending_status.id, total_price)
+
+        # Step 4: Create order products and update stock
+        self._create_order_products(new_order.id, order_request.products, product_map)
+
+        # Step 5: Create response model
+        response_data = CreateOrderResponseModel(
+            id=new_order.id,
+            user_id=new_order.user_id,
+            status=pending_status.name,
+            total_price=new_order.total_price,
+            created_at=new_order.created_at
+        )
+
+        return response_data
+
+    def _get_pending_status(self):
         pending_status = self.db.query(Status).filter(Status.name == "Pending").first()
         if not pending_status:
             raise HTTPException(status_code=400, detail="Pending status not found")
+        return pending_status
 
-        # Fetch all products in a single query
-        product_ids = [item.product_id for item in order_request.products]
+    def _validate_products(self, order_products):
+        total_price = Decimal('0.00')
+        product_ids = [item.product_id for item in order_products]
         db_products = self.db.query(Product).filter(Product.id.in_(product_ids)).all()
 
         # Create a dictionary for quick lookup
         product_map = {str(product.id): product for product in db_products}
 
-        # Create new order
-        new_order = Order(
-            user_id=user_id,
-            status_id=pending_status.id,
-            total_price=total_price,
-            created_at=datetime.now(timezone.utc)
-        )
-
-        # Add new order to the session
-        self.db.add(new_order)
-        self.db.commit()  # Commit to get the new order ID
-
-        order_products = []  # List to hold order product instances
-
-        for item in order_request.products:
+        for item in order_products:
             product_id = str(item.product_id)
             product = product_map.get(product_id)
 
@@ -57,41 +66,44 @@ class OrderService:
             item_price = product.price * item.quantity
             total_price += item_price
 
+        return product_map, total_price
+
+    def _create_new_order(self, user_id: UUID, status_id: UUID, total_price: Decimal):
+        new_order = Order(
+            user_id=user_id,
+            status_id=status_id,
+            total_price=total_price,
+            created_at=datetime.now(timezone.utc)
+        )
+        self.db.add(new_order)
+        self.db.commit()  # Commit to get the new order ID
+        return new_order
+
+    def _create_order_products(self, order_id: UUID, order_products, product_map):
+        order_products_list = []
+
+        for item in order_products:
+            product_id = str(item.product_id)
+            product = product_map[product_id]
+
+            # Create the order product instance
             order_product = OrderProduct(
-                order_id=new_order.id,  # Set the order ID here after the commit
+                order_id=order_id,  # Set the order ID here
                 product_id=product.id,
                 quantity=item.quantity,
                 created_at=datetime.now(timezone.utc)
             )
-            order_products.append(order_product)
+            order_products_list.append(order_product)
 
             # Update product stock
             product.stock -= item.quantity
 
-        # Update the total price
-        new_order.total_price = total_price
+        # Update the total price of the order
+        total_price = sum(product.price * item.quantity for item in order_products)
+        self.db.add_all(order_products_list)
+        self.db.commit()  # Commit the order products
 
-        # Add order products to the session
-        self.db.add_all(order_products)
-
-        try:
-            self.db.commit()  # Commit the order products
-            self.db.refresh(new_order)  # Refresh to get the updated order
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise HTTPException(status_code=500, detail="Error creating order")
-
-
-        # Create the response model
-        response_data = CreateOrderResponseModel(
-            id=new_order.id,
-            user_id=new_order.user_id,
-            status=pending_status.name,  # Ensure status is a string
-            total_price=new_order.total_price,
-            created_at=new_order.created_at
-        )
-
-        return response_data
+        return total_price
 
     def update_order_status(self, order_id: UUID, new_status: str) -> UpdateOrderStatusResponseModel:
         order = self.db.query(Order).get(order_id)
@@ -105,11 +117,9 @@ class OrderService:
         order.status_id = new_status_obj.id
         order.updated_at = datetime.now(timezone.utc)
 
-        try:
-            self.db.commit()
-        except SQLAlchemyError as e:
-            self.db.rollback()
-            raise HTTPException(status_code=500, detail="Error updating order status")
+        
+        self.db.commit()
+        self.db.refresh(order)
 
         response_data =  UpdateOrderStatusResponseModel(
             id=order.id,
@@ -142,7 +152,7 @@ class OrderService:
             quantity=op.quantity
         ) for op in order.order_products]  # Create a list of OrderProductBaseModel
     )
-
+     
     def cancel_order(self, order_id: UUID, user_id: UUID):
         order = self.db.query(Order).get(order_id)
         if not order:
@@ -166,10 +176,8 @@ class OrderService:
             product = order_product.product
             product.stock += order_product.quantity
 
-        try:
-            self.db.commit()
-        except SQLAlchemyError as e:
-            self.db.rollback()
-            raise HTTPException(status_code=500, detail="Error canceling order")
+        
+        self.db.commit()
+        self.db.refresh(order)
 
         return order
