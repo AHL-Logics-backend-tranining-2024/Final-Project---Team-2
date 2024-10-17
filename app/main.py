@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.api.main import api_router
-from app.connection_to_db import Base, engine
+from app.connection_to_db import engine
 from . import models
 
 # Create the tables

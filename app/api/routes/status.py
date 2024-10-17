@@ -1,10 +1,8 @@
-from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends,status
 from app.api.auth.oauth import get_current_admin_user
 from app.connection_to_db import get_db
-from app.database import statusOrders_db, orders_db
-from app.models import Order, User
+from app.models import User
 from app.schemas import (
     CreateStatusRequestModel,
     CreateStatusResponseModel,

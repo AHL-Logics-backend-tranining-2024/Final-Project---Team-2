@@ -9,7 +9,6 @@ from app.connection_to_db import get_db
 from app.settings import settings
 from app.utils import ALGORITHM
 from app.models import User
-from app.database import users_db
 from sqlalchemy.orm import Session
 
 

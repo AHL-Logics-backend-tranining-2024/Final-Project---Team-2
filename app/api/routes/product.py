@@ -1,22 +1,17 @@
-from datetime import datetime, timezone
 from typing import Annotated
-from uuid import UUID, uuid4
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from uuid import UUID
+from fastapi import APIRouter, Depends,Query, status
 from app.api.auth.oauth import get_current_admin_user
 from app.connection_to_db import get_db
 from app.schemas import (
     CreateProductRequestModel,
     CreateProductResponseModel,
-    GetProductBySearchResponseModel,
     GetProductResponseModel,
-    Product,
-    ProductBaseModel,
     SearchRequest,
     SearchResult,
     UpdatedProductRequestModel,
     UpdatedProductResponseModel,
 )
-from app.database import products_db
 from sqlalchemy.orm import Session
 from app.models import User
 from app.services.product_service import ProductService
