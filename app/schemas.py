@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 import re
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 from pydantic import BaseModel, EmailStr, Field, validator
 from app.utils import get_password_hash, verify_password

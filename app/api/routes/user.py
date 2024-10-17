@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.auth.oauth import get_current_admin_user, get_current_user
@@ -14,9 +13,7 @@ from app.schemas import (
 )
 from app.models import User
 from app.services.user_service import UserService
-from app.utils import get_password_hash
 from app.api.auth.auth import *
-from app.database import users_db
 from sqlalchemy.orm import Session
 
 # Router and fake database setup

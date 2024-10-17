@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy.orm import Session
 from uuid import UUID
-from typing import List
 from app.api.auth.oauth import get_current_admin_user, get_current_user
 from app.connection_to_db import get_db
 from app.models import User
@@ -11,8 +10,7 @@ from app.schemas import (
     CreateOrderResponseModel,
     UpdateOrderStatusRequestModel,
     UpdateOrderStatusResponseModel,
-    GetOrderResponseModel,
-    GetOrderToUserResponseModel
+    GetOrderResponseModel
 )
 
 
